@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+@theme {
+    --animate-shimmer: shimmer 1.5s infinite;
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+}
+
+body {
+    background-color: #0f172a;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden; /* Prevent scrollbars */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}

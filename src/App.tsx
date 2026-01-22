@@ -13,7 +13,8 @@ function App() {
     wave: 0,
     isGameOver: false,
     gameStarted: false,
-    waveActive: false
+    waveActive: false,
+    isPaused: false
   });
   const [selectedTowerType, setSelectedTowerType] = useState<TowerType | null>(null);
   const [selectedTower, setSelectedTower] = useState<Tower | null>(null);
@@ -86,7 +87,7 @@ function App() {
 
         <HUD
           gameState={gameState}
-          engine={engineRef.current}
+          engine={engineRef}
           selectedTowerType={selectedTowerType}
           onSelectTower={(type) => {
               setSelectedTowerType(type);

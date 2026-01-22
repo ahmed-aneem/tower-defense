@@ -20,6 +20,8 @@ export interface IEnemy extends GameEntity {
   freezeFactor: number; // 1 = normal, 0 = stopped
 }
 
+import { type Enemy } from './game/Enemy';
+
 export interface ITower extends GameEntity {
   type: TowerType;
   range: number;
@@ -27,7 +29,7 @@ export interface ITower extends GameEntity {
   rotation: number;
   level: number;
   targetId: string | null;
-  update(enemies?: any[]): any;
+  update(enemies?: Enemy[]): Enemy | null;
 }
 
 export interface IProjectile extends GameEntity {

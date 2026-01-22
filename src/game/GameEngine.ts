@@ -5,6 +5,7 @@ import { Particle } from './Particle';
 import { Vector2 } from './Vector';
 import { GAME_WIDTH, GAME_HEIGHT, PATH_WAYPOINTS, TOWERS, type TowerType } from './Constants';
 import { type EnemyType } from '../types';
+import { soundManager } from './SoundManager';
 
 export interface GameState {
   money: number;
@@ -13,6 +14,7 @@ export interface GameState {
   isGameOver: boolean;
   gameStarted: boolean; // Has the user clicked "Start Game"?
   waveActive: boolean; // Are enemies spawning/alive?
+  isPaused: boolean;
 }
 
 export class GameEngine {
@@ -30,13 +32,17 @@ export class GameEngine {
     wave: 1,
     isGameOver: false,
     gameStarted: false,
-    waveActive: false
+    waveActive: false,
+    isPaused: false
   };
 
   // private lastTime: number = 0;
   private spawnTimer: number = 0;
   private enemiesToSpawn: EnemyType[] = [];
   private onStateChange: (state: GameState) => void;
+
+  // Screen shake
+  private shakeIntensity: number = 0;
 
   constructor(canvas: HTMLCanvasElement, onStateChange: (state: GameState) => void) {
     this.canvas = canvas;
@@ -54,6 +60,11 @@ export class GameEngine {
   startGame() {
     this.state.gameStarted = true;
     this.startWave();
+    this.notifyState();
+  }
+
+  togglePause() {
+    this.state.isPaused = !this.state.isPaused;
     this.notifyState();
   }
 
@@ -100,6 +111,10 @@ export class GameEngine {
 
       this.state.money -= cost;
       this.towers.push(new Tower(pos, type));
+
+      // Visual feedback
+      this.createExplosion(pos, TOWERS[type].color, 10, 2);
+
       this.notifyState();
       return true;
     }
@@ -108,6 +123,7 @@ export class GameEngine {
 
   sellTower(tower: Tower) {
       this.state.money += Math.floor(TOWERS[tower.type].cost * 0.5);
+      this.createExplosion(tower.position, '#F87171', 8, 1.5);
       this.towers = this.towers.filter(t => t.id !== tower.id);
       this.notifyState();
   }
@@ -131,11 +147,12 @@ export class GameEngine {
     return p.distanceTo(projection);
   }
 
-  private loop(_timestamp: number) {
-    // const deltaTime = timestamp - this.lastTime;
+  private loop() {
+    // Delta time calculation
+    // const deltaTime = (timestamp - this.lastTime) / 1000;
     // this.lastTime = timestamp;
 
-    if (this.state.gameStarted && !this.state.isGameOver) {
+    if (this.state.gameStarted && !this.state.isGameOver && !this.state.isPaused) {
       this.update();
     }
     this.draw();
@@ -168,10 +185,13 @@ export class GameEngine {
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       if (this.enemies[i].reachedEnd) {
         this.state.lives--;
+        this.shakeIntensity = 10; // Shake when taking damage
+        soundManager.playHit();
         this.enemies.splice(i, 1);
         this.notifyState();
         if (this.state.lives <= 0) {
           this.state.isGameOver = true;
+          soundManager.playGameOver();
           this.notifyState();
         }
       }
@@ -183,8 +203,9 @@ export class GameEngine {
       if (target) {
         // Shoot
         this.projectiles.push(new Projectile(t.position, target.position, t.damage, t.color));
+        soundManager.playShoot(t.type);
         // Add shoot particle
-         this.createExplosion(t.position, t.color, 3);
+         this.createExplosion(t.position, t.color, 3, 0.5);
       }
     });
 
@@ -205,7 +226,7 @@ export class GameEngine {
         if (p.position.distanceTo(e.position) < e.radius + 5) {
           e.takeDamage(p.damage);
           hit = true;
-          this.createExplosion(p.position, p.color, 5);
+          this.createExplosion(p.position, p.color, 5, 0.5);
           break; // Projectile hits one enemy
         }
       }
@@ -219,7 +240,9 @@ export class GameEngine {
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       if (this.enemies[i].isDead) {
         this.state.money += this.enemies[i].reward;
-        this.createExplosion(this.enemies[i].position, '#FFF', 10);
+        this.createExplosion(this.enemies[i].position, '#FFF', 15, 1.5);
+        soundManager.playExplosion();
+        this.shakeIntensity = Math.min(this.shakeIntensity + 2, 10);
         this.enemies.splice(i, 1);
         this.notifyState();
       }
@@ -228,41 +251,92 @@ export class GameEngine {
     // Update Particles
     this.particles.forEach(p => p.update());
     this.particles = this.particles.filter(p => p.life > 0);
+
+    // Decay shake
+    if (this.shakeIntensity > 0) {
+      this.shakeIntensity *= 0.9;
+      if (this.shakeIntensity < 0.5) this.shakeIntensity = 0;
+    }
   }
 
-  private createExplosion(pos: Vector2, color: string, count: number) {
+  private createExplosion(pos: Vector2, color: string, count: number, scale: number = 1) {
     for (let i = 0; i < count; i++) {
-      this.particles.push(new Particle(pos, color));
+      this.particles.push(new Particle(pos, color, scale, scale));
     }
   }
 
   private draw() {
+    this.ctx.save();
+
+    // Apply screenshake
+    if (this.shakeIntensity > 0) {
+      const dx = (Math.random() - 0.5) * this.shakeIntensity;
+      const dy = (Math.random() - 0.5) * this.shakeIntensity;
+      this.ctx.translate(dx, dy);
+    }
+
     // Clear
-    this.ctx.fillStyle = '#1F2937'; // Dark gray bg
+    this.ctx.fillStyle = '#0f172a'; // Deep blue/slate bg
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Draw Path
+    // Draw Grid
+    this.drawGrid();
+
+    // Draw Path with Glow
+    this.ctx.shadowBlur = 15;
+    this.ctx.shadowColor = '#3b82f6'; // Blue glow
     this.ctx.beginPath();
     this.ctx.moveTo(PATH_WAYPOINTS[0].x, PATH_WAYPOINTS[0].y);
     for (let i = 1; i < PATH_WAYPOINTS.length; i++) {
       this.ctx.lineTo(PATH_WAYPOINTS[i].x, PATH_WAYPOINTS[i].y);
     }
-    this.ctx.lineWidth = 40;
-    this.ctx.strokeStyle = '#374151'; // Slightly lighter path
+    this.ctx.lineWidth = 20;
+    this.ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)'; // Faint wide path
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
     this.ctx.stroke();
 
-    // Path centerline
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeStyle = '#4B5563';
+    this.ctx.lineWidth = 3;
+    this.ctx.strokeStyle = '#60a5fa'; // Bright center
     this.ctx.stroke();
+
+    this.ctx.shadowBlur = 0; // Reset for other items
 
     // Draw Entities
     this.towers.forEach(t => t.draw(this.ctx));
     this.enemies.forEach(e => e.draw(this.ctx));
-    this.projectiles.forEach(p => p.draw(this.ctx));
+
+    // Glowing projectiles
+    this.ctx.shadowBlur = 10;
+    this.projectiles.forEach(p => {
+        this.ctx.shadowColor = p.color;
+        p.draw(this.ctx)
+    });
+    this.ctx.shadowBlur = 0;
+
     this.particles.forEach(p => p.draw(this.ctx));
+
+    this.ctx.restore();
+  }
+
+  private drawGrid() {
+      this.ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
+      this.ctx.lineWidth = 1;
+
+      const cellSize = 40;
+      for (let x = 0; x <= this.canvas.width; x += cellSize) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x, 0);
+          this.ctx.lineTo(x, this.canvas.height);
+          this.ctx.stroke();
+      }
+
+      for (let y = 0; y <= this.canvas.height; y += cellSize) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(0, y);
+          this.ctx.lineTo(this.canvas.width, y);
+          this.ctx.stroke();
+      }
   }
 
   private notifyState() {
