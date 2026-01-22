@@ -8,7 +8,7 @@ export interface GameEntity {
   draw(ctx: CanvasRenderingContext2D): void;
 }
 
-export type EnemyType = 'NORMAL' | 'FAST' | 'TANK';
+export type EnemyType = 'NORMAL' | 'FAST' | 'TANK' | 'BOSS' | 'SWARM' | 'ARMORED';
 
 export interface IEnemy extends GameEntity {
   hp: number;
@@ -18,6 +18,7 @@ export interface IEnemy extends GameEntity {
   reachedEnd: boolean;
   reward: number;
   freezeFactor: number; // 1 = normal, 0 = stopped
+  isArmored: boolean;
 }
 
 import { type Enemy } from './game/Enemy';
@@ -38,6 +39,8 @@ export interface IProjectile extends GameEntity {
   velocity: Vector2;
   active: boolean;
   color: string;
+  isSplash: boolean;
+  splashRadius: number;
 }
 
 export interface IParticle extends GameEntity {

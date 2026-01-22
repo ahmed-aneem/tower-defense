@@ -10,13 +10,17 @@ export class Projectile implements IProjectile {
   active: boolean = true;
   speed: number = 8;
   color: string;
+  isSplash: boolean;
+  splashRadius: number;
 
-  constructor(startPos: Vector2, targetPos: Vector2, damage: number, color: string) {
+  constructor(startPos: Vector2, targetPos: Vector2, damage: number, color: string, isSplash: boolean = false, splashRadius: number = 0) {
     this.id = Math.random().toString(36).substr(2, 9);
     this.position = startPos.clone();
     this.damage = damage;
     this.color = color;
     this.targetId = null;
+    this.isSplash = isSplash;
+    this.splashRadius = splashRadius;
 
     const dir = targetPos.sub(startPos).normalize();
     this.velocity = dir.scale(this.speed);
@@ -35,7 +39,8 @@ export class Projectile implements IProjectile {
     if (!this.active) return;
 
     ctx.beginPath();
-    ctx.arc(this.position.x, this.position.y, 4, 0, Math.PI * 2);
+    const r = this.isSplash ? 6 : 4;
+    ctx.arc(this.position.x, this.position.y, r, 0, Math.PI * 2);
     ctx.fillStyle = this.color;
     ctx.fill();
   }

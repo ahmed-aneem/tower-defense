@@ -70,6 +70,33 @@ export class Tower implements ITower {
 
     // Return target if ready to shoot
     if (this.cooldownTimer <= 0 && target) {
+      // Special handling for Laser & Frost (continuous/AOE) or standard shoot
+
+      // For FROST, we don't return a target to 'shoot' a projectile, but we apply slow here (or in Engine)
+      // Actually, standard pattern is Engine calls update(), if it returns Enemy, Engine creates projectile.
+      // For FROST and LASER, we might want to return null here and handle logic inside update?
+      // Or return target and let Engine handle type check.
+
+      // For LASER: We want to deal damage every frame, so cooldown is 0.
+      // For FROST: We want to apply slow to ALL enemies in range.
+
+      if (this.type === 'FROST') {
+          // Slow all enemies in range
+          enemies.forEach(e => {
+             if (e.position.distanceTo(this.position) <= this.range) {
+                 e.freezeFactor = 0.5;
+             }
+          });
+          // Frost doesn't shoot projectiles
+          return null;
+      }
+
+      if (this.type === 'LASER') {
+          // Continuous damage
+           target.takeDamage(this.damage);
+           return target; // Return target for visual beam drawing in Engine (or draw here)
+      }
+
       this.cooldownTimer = this.maxCooldown;
       this.recoil = 5; // Kick back
       return target;
@@ -134,6 +161,34 @@ export class Tower implements ITower {
       // Barrels
       ctx.fillRect(8, -6, 18, 4);
       ctx.fillRect(8, 2, 18, 4);
+    } else if (this.type === 'FROST') {
+        // Frost Tower
+        ctx.beginPath();
+        ctx.moveTo(0, -12);
+        ctx.lineTo(10, 6);
+        ctx.lineTo(-10, 6);
+        ctx.closePath();
+        ctx.fill();
+        // Crystal
+        ctx.fillStyle = '#a5f3fc';
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (this.type === 'SPLASH') {
+        // Cannon
+        ctx.fillRect(-12, -12, 24, 24);
+        ctx.fillStyle = '#7f1d1d';
+        ctx.fillRect(0, -6, 26, 12); // Wide barrel
+    } else if (this.type === 'LASER') {
+        // Laser
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.fill();
+        // Prongs
+        ctx.fillRect(5, -8, 15, 2);
+        ctx.fillRect(5, 6, 15, 2);
+        ctx.fillStyle = '#f0abfc';
+        ctx.fillRect(0, -2, 20, 4); // Core
     } else {
       // Basic
       ctx.beginPath();

@@ -1,3 +1,5 @@
+import { type TowerType } from './Constants';
+
 export class SoundManager {
   private ctx: AudioContext | null = null;
   private enabled: boolean = true;
@@ -25,7 +27,7 @@ export class SoundManager {
     }
   }
 
-  playShoot(type: 'BASIC' | 'SNIPER' | 'RAPID') {
+  playShoot(type: TowerType) {
     if (!this.ctx || !this.enabled) return;
     this.resume();
 
@@ -53,6 +55,33 @@ export class SoundManager {
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
       osc.start(now);
       osc.stop(now + 0.05);
+    } else if (type === 'SPLASH') {
+      // Deeper explosion sound
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    } else if (type === 'LASER') {
+      // Hum
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1000, now);
+      osc.frequency.linearRampToValueAtTime(800, now + 0.1);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.linearRampToValueAtTime(0, now + 0.1);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } else if (type === 'FROST') {
+      // Glassy sound
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1500, now);
+      osc.frequency.exponentialRampToValueAtTime(2000, now + 0.2);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now);
+      osc.stop(now + 0.2);
     } else {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(400, now);

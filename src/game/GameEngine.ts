@@ -50,11 +50,34 @@ export class GameEngine {
     this.onStateChange = onStateChange;
 
     // Set canvas size
-    this.canvas.width = GAME_WIDTH;
-    this.canvas.height = GAME_HEIGHT;
+    this.updateCanvasSize();
+
+    // Listen for resize
+    window.addEventListener('resize', () => {
+        this.updateCanvasSize();
+    });
 
     // Start loop
     requestAnimationFrame(this.loop.bind(this));
+  }
+
+  private updateCanvasSize() {
+      // For a "responsive" canvas that keeps aspect ratio or fits window
+      // We will actually keep internal resolution fixed at GAME_WIDTH/GAME_HEIGHT for logic simplicity,
+      // but we can scale the canvas CSS or just adopt the window size if we want a truly larger map.
+      // Given "mapa maior", we likely want to see more.
+
+      // However, our path is defined in fixed coordinates.
+      // So we must stick to the fixed logic size, but ensure it scales via CSS.
+      // OR, we update GAME_WIDTH/HEIGHT to match window and scale path.
+
+      // The simplest robust approach for this codebase is:
+      // Fixed Logic Resolution (High Res), scaled via CSS to fit screen.
+
+      this.canvas.width = GAME_WIDTH;
+      this.canvas.height = GAME_HEIGHT;
+
+      // The CSS will handle the display size (width: 100%; height: 100%; object-fit: contain;)
   }
 
   startGame() {
@@ -80,8 +103,15 @@ export class GameEngine {
     const count = 5 + Math.floor(waveNum * 1.5);
 
     for (let i = 0; i < count; i++) {
-        if (waveNum % 5 === 0 && i < waveNum / 5) {
+        if (waveNum % 10 === 0 && i === 0) {
+            enemies.push('BOSS');
+        } else if (waveNum % 5 === 0 && i < waveNum / 3) {
              enemies.push('TANK');
+             enemies.push('ARMORED');
+        } else if (waveNum > 3 && i % 4 === 0) {
+            enemies.push('SWARM');
+            enemies.push('SWARM');
+            enemies.push('SWARM');
         } else if (waveNum > 2 && i % 3 === 0) {
             enemies.push('FAST');
         } else {
@@ -200,12 +230,26 @@ export class GameEngine {
     // Update Towers
     this.towers.forEach(t => {
       const target = t.update(this.enemies);
+
+      // Special Logic for Towers that return target but handle things differently
       if (target) {
-        // Shoot
-        this.projectiles.push(new Projectile(t.position, target.position, t.damage, t.color));
-        soundManager.playShoot(t.type);
-        // Add shoot particle
-         this.createExplosion(t.position, t.color, 3, 0.5);
+          if (t.type === 'LASER') {
+              // Laser damage is handled in Tower.update (or we could do it here)
+              // We just need to draw the laser beam later.
+              // We can add a "Laser Particle" or just store the beam state?
+              // Simplest: Add a transient particle/effect for this frame
+              // But for now, we will handle visual in draw() by checking targetId
+              // Sound?
+              if (Math.random() < 0.1) soundManager.playShoot(t.type);
+          } else {
+            // Standard Projectile
+            const isSplash = t.type === 'SPLASH';
+            const splashRadius = isSplash ? 60 : 0;
+            this.projectiles.push(new Projectile(t.position, target.position, t.damage, t.color, isSplash, splashRadius));
+            soundManager.playShoot(t.type);
+            // Add shoot particle
+            this.createExplosion(t.position, t.color, 3, 0.5);
+          }
       }
     });
 
@@ -224,10 +268,25 @@ export class GameEngine {
       for (const e of this.enemies) {
         if (e.isDead) continue;
         if (p.position.distanceTo(e.position) < e.radius + 5) {
-          e.takeDamage(p.damage);
-          hit = true;
-          this.createExplosion(p.position, p.color, 5, 0.5);
-          break; // Projectile hits one enemy
+            hit = true;
+
+            if (p.isSplash) {
+                // Splash Damage
+                this.enemies.forEach(nearby => {
+                    if (nearby.isDead) return;
+                    if (nearby.position.distanceTo(p.position) <= p.splashRadius) {
+                        // Falloff damage? No, full damage for now.
+                        nearby.takeDamage(p.damage);
+                    }
+                });
+                this.createExplosion(p.position, p.color, 20, 1.5); // Bigger explosion
+                soundManager.playExplosion();
+            } else {
+                // Single Target
+                e.takeDamage(p.damage);
+                this.createExplosion(p.position, p.color, 5, 0.5);
+            }
+            break;
         }
       }
 
@@ -303,7 +362,29 @@ export class GameEngine {
     this.ctx.shadowBlur = 0; // Reset for other items
 
     // Draw Entities
-    this.towers.forEach(t => t.draw(this.ctx));
+    this.towers.forEach(t => {
+        t.draw(this.ctx);
+        // Draw Laser Beam if active
+        if (t.type === 'LASER' && t.targetId) {
+            const target = this.enemies.find(e => e.id === t.targetId);
+            if (target && !target.isDead) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(t.position.x, t.position.y);
+                this.ctx.lineTo(target.position.x, target.position.y);
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeStyle = t.color; // Fuchsia
+                this.ctx.lineCap = 'round';
+                this.ctx.stroke();
+
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.stroke();
+
+                // Impact spark
+                this.createExplosion(target.position, t.color, 1, 0.5);
+            }
+        }
+    });
     this.enemies.forEach(e => e.draw(this.ctx));
 
     // Glowing projectiles
