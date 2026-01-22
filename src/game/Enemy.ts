@@ -15,6 +15,7 @@ export class Enemy implements IEnemy {
   radius: number;
   color: string;
   type: EnemyType;
+  isArmored: boolean;
 
   private waypointIndex: number = 0;
   private path: Vector2[] = PATH_WAYPOINTS;
@@ -30,6 +31,7 @@ export class Enemy implements IEnemy {
     this.reward = config.reward;
     this.radius = config.radius;
     this.color = config.color;
+    this.isArmored = config.isArmored;
 
     // Start at the first waypoint
     this.position = this.path[0].clone();
@@ -39,6 +41,12 @@ export class Enemy implements IEnemy {
     if (this.isDead || this.reachedEnd) return;
 
     this.wobbleOffset += 0.1;
+
+    // Apply slow decay (return to normal speed)
+    if (this.freezeFactor < 1) {
+        this.freezeFactor += 0.005;
+        if (this.freezeFactor > 1) this.freezeFactor = 1;
+    }
 
     const target = this.path[this.waypointIndex + 1];
     if (!target) {
@@ -71,19 +79,39 @@ export class Enemy implements IEnemy {
     ctx.lineWidth = 2;
 
     ctx.beginPath();
-    if (this.type === 'TANK') {
-        // Square for Tank
+    if (this.type === 'TANK' || this.type === 'ARMORED') {
+        // Square for Tank/Armored
         ctx.rect(this.position.x - this.radius, this.position.y - this.radius, this.radius * 2, this.radius * 2);
-    } else if (this.type === 'FAST') {
-        // Triangle for Fast
+    } else if (this.type === 'FAST' || this.type === 'SWARM') {
+        // Triangle for Fast/Swarm
         ctx.moveTo(this.position.x + this.radius, this.position.y);
         ctx.lineTo(this.position.x - this.radius, this.position.y - this.radius);
         ctx.lineTo(this.position.x - this.radius, this.position.y + this.radius);
+        ctx.closePath();
+    } else if (this.type === 'BOSS') {
+        // Octagon/Star for Boss
+        const spikes = 8;
+        const outerRadius = this.radius;
+        const innerRadius = this.radius / 1.5;
+        for (let i = 0; i < spikes * 2; i++) {
+            const r = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = (Math.PI * i) / spikes;
+            const x = this.position.x + Math.cos(angle) * r;
+            const y = this.position.y + Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
         ctx.closePath();
     } else {
         // Circle for Normal
         ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
     }
+
+    // Draw Frozen effect
+    if (this.freezeFactor < 0.8) {
+        ctx.fillStyle = '#67e8f9'; // Cyan tint
+    }
+
     ctx.fill();
     ctx.stroke();
 
@@ -91,9 +119,9 @@ export class Enemy implements IEnemy {
 
     // Draw Health Bar
     const hpPct = this.hp / this.maxHp;
-    const barWidth = 24;
+    const barWidth = this.radius * 2;
     const barHeight = 4;
-    const yOffset = this.radius + 10;
+    const yOffset = this.radius + 8;
 
     // Background
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -106,7 +134,12 @@ export class Enemy implements IEnemy {
   }
 
   takeDamage(amount: number) {
-    this.hp -= amount;
+    let finalDamage = amount;
+    if (this.isArmored) {
+        finalDamage = Math.max(1, amount * 0.5); // 50% damage reduction
+    }
+
+    this.hp -= finalDamage;
     if (this.hp <= 0) {
       this.hp = 0;
       this.isDead = true;

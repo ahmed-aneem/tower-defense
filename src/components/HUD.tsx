@@ -123,7 +123,7 @@ export const HUD: React.FC<HUDProps> = ({
       )}
 
       {/* Bottom Bar: Tower Selection */}
-      <div className="flex justify-center gap-3 sm:gap-6 pointer-events-auto pb-4 sm:pb-8 w-full overflow-x-auto px-4">
+      <div className="flex justify-center gap-2 sm:gap-4 pointer-events-auto pb-2 sm:pb-4 w-full overflow-x-auto px-2 sm:px-4 no-scrollbar">
         {Object.entries(TOWERS).map(([key, tower]) => {
             const isSelected = selectedTowerType === key;
             const canAfford = gameState.money >= tower.cost;
@@ -134,7 +134,7 @@ export const HUD: React.FC<HUDProps> = ({
                 onClick={() => onSelectTower(isSelected ? null : key as TowerType)}
                 disabled={!canAfford}
                 className={`
-                  relative group flex flex-col items-center p-3 sm:p-4 rounded-xl border transition-all duration-200 min-w-[90px]
+                  relative group flex flex-col items-center p-2 sm:p-3 rounded-xl border transition-all duration-200 min-w-[70px] sm:min-w-[90px]
                   ${isSelected
                     ? 'bg-slate-800 border-blue-400 ring-2 ring-blue-500/50 -translate-y-2 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.5)]'
                     : 'bg-slate-900/80 border-slate-700 hover:border-slate-500 hover:bg-slate-800'}
@@ -142,13 +142,16 @@ export const HUD: React.FC<HUDProps> = ({
                 `}
               >
                 <div
-                    className="w-10 h-10 rounded-lg mb-3 shadow-lg flex items-center justify-center transition-transform group-hover:scale-110"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg mb-1 sm:mb-3 shadow-lg flex items-center justify-center transition-transform group-hover:scale-110"
                     style={{ backgroundColor: tower.color, boxShadow: isSelected ? `0 0 15px ${tower.color}` : 'none' }}
                 >
                     {/* Simple Icon Representation */}
                     {key === 'BASIC' && <div className="w-4 h-4 bg-white rounded-full" />}
                     {key === 'SNIPER' && <div className="w-6 h-1 bg-white" />}
                     {key === 'RAPID' && <div className="flex gap-0.5"><div className="w-1 h-4 bg-white"/><div className="w-1 h-4 bg-white"/><div className="w-1 h-4 bg-white"/></div>}
+                    {key === 'FROST' && <div className="w-4 h-4 bg-white rotate-45" />}
+                    {key === 'SPLASH' && <div className="w-5 h-3 bg-white" />}
+                    {key === 'LASER' && <div className="w-6 h-0.5 bg-white" />}
                 </div>
 
                 <span className={`font-bold text-xs sm:text-sm tracking-wider mb-1 ${isSelected ? 'text-white' : 'text-slate-300'}`}>
