@@ -14,11 +14,14 @@ export class Enemy implements IEnemy {
   freezeFactor: number = 1;
   radius: number;
   color: string;
+  type: EnemyType;
 
   private waypointIndex: number = 0;
   private path: Vector2[] = PATH_WAYPOINTS;
+  private wobbleOffset: number = Math.random() * 100;
 
   constructor(type: EnemyType) {
+    this.type = type;
     this.id = Math.random().toString(36).substr(2, 9);
     const config = ENEMIES[type];
     this.hp = config.hp;
@@ -34,6 +37,8 @@ export class Enemy implements IEnemy {
 
   update() {
     if (this.isDead || this.reachedEnd) return;
+
+    this.wobbleOffset += 0.1;
 
     const target = this.path[this.waypointIndex + 1];
     if (!target) {
@@ -56,25 +61,48 @@ export class Enemy implements IEnemy {
   draw(ctx: CanvasRenderingContext2D) {
     if (this.isDead || this.reachedEnd) return;
 
-    // Draw body
-    ctx.beginPath();
-    ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+    // Neon Glow
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.color;
+
+    // Draw body based on type
     ctx.fillStyle = this.color;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    if (this.type === 'TANK') {
+        // Square for Tank
+        ctx.rect(this.position.x - this.radius, this.position.y - this.radius, this.radius * 2, this.radius * 2);
+    } else if (this.type === 'FAST') {
+        // Triangle for Fast
+        ctx.moveTo(this.position.x + this.radius, this.position.y);
+        ctx.lineTo(this.position.x - this.radius, this.position.y - this.radius);
+        ctx.lineTo(this.position.x - this.radius, this.position.y + this.radius);
+        ctx.closePath();
+    } else {
+        // Circle for Normal
+        ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+    }
     ctx.fill();
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
     ctx.stroke();
+
+    ctx.shadowBlur = 0;
 
     // Draw Health Bar
     const hpPct = this.hp / this.maxHp;
-    const barWidth = 20;
+    const barWidth = 24;
     const barHeight = 4;
+    const yOffset = this.radius + 10;
 
-    ctx.fillStyle = 'red';
-    ctx.fillRect(this.position.x - barWidth / 2, this.position.y - this.radius - 8, barWidth, barHeight);
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(this.position.x - barWidth / 2, this.position.y - yOffset, barWidth, barHeight);
 
-    ctx.fillStyle = 'lime';
-    ctx.fillRect(this.position.x - barWidth / 2, this.position.y - this.radius - 8, barWidth * hpPct, barHeight);
+    // Health
+    const hpColor = hpPct > 0.5 ? '#22c55e' : hpPct > 0.25 ? '#eab308' : '#ef4444';
+    ctx.fillStyle = hpColor;
+    ctx.fillRect(this.position.x - barWidth / 2, this.position.y - yOffset, barWidth * hpPct, barHeight);
   }
 
   takeDamage(amount: number) {

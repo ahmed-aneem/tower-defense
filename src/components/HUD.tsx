@@ -1,12 +1,13 @@
-import React from 'react';
-import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX } from 'lucide-react';
 import { type GameState, GameEngine } from '../game/GameEngine';
 import { TOWERS, type TowerType } from '../game/Constants';
 import { Tower } from '../game/Tower';
+import { soundManager } from '../game/SoundManager';
 
 interface HUDProps {
   gameState: GameState;
-  engine: GameEngine | null;
+  engine: React.MutableRefObject<GameEngine | null> | null;
   selectedTowerType: TowerType | null;
   onSelectTower: (type: TowerType | null) => void;
   selectedTower: Tower | null;
@@ -23,116 +24,220 @@ export const HUD: React.FC<HUDProps> = ({
   onSellTower,
   onDeselect
 }) => {
+  const [isMuted, setIsMuted] = useState(false);
+
+  const toggleMute = () => {
+    soundManager.toggleMute();
+    setIsMuted(!isMuted);
+  };
+
   return (
-    <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4">
-      {/* Top Bar: Stats */}
-      <div className="flex justify-between items-start pointer-events-auto">
-        <div className="flex gap-4 bg-gray-900/80 p-3 rounded-lg text-white border border-gray-700 backdrop-blur-sm">
-          <div className="flex items-center gap-2 text-red-400">
-            <Heart size={20} fill="currentColor" />
-            <span className="font-bold text-xl">{gameState.lives}</span>
+    <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 font-sans selection:bg-blue-500/30">
+      {/* Top Bar: Stats & Controls */}
+      <div className="flex justify-between items-start pointer-events-auto w-full max-w-5xl mx-auto">
+
+        {/* Stats */}
+        <div className="flex gap-2 sm:gap-4 bg-slate-900/90 p-2 sm:p-3 rounded-xl text-white border border-slate-700/50 backdrop-blur-md shadow-lg shadow-blue-500/10">
+          <div className="flex items-center gap-2 px-3 py-1 bg-slate-800/50 rounded-lg border border-slate-700/30">
+            <Heart size={18} className="text-rose-500 animate-pulse" fill="currentColor" />
+            <span className="font-bold text-lg sm:text-xl tabular-nums">{gameState.lives}</span>
           </div>
-          <div className="flex items-center gap-2 text-yellow-400">
-            <Coins size={20} fill="currentColor" />
-            <span className="font-bold text-xl">{gameState.money}</span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-slate-800/50 rounded-lg border border-slate-700/30">
+            <Coins size={18} className="text-amber-400" fill="currentColor" />
+            <span className="font-bold text-lg sm:text-xl text-amber-200 tabular-nums">{gameState.money}</span>
           </div>
-          <div className="flex items-center gap-2 text-blue-400">
-            <Activity size={20} />
-            <span className="font-bold text-xl">Wave {gameState.wave}</span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-slate-800/50 rounded-lg border border-slate-700/30">
+            <Activity size={18} className="text-cyan-400" />
+            <span className="font-bold text-lg sm:text-xl text-cyan-200 tabular-nums">WAVE {gameState.wave}</span>
           </div>
         </div>
 
-        {/* Wave Control */}
-        {!gameState.waveActive && gameState.gameStarted && !gameState.isGameOver && (
-          <button
-            onClick={() => engine?.startWave()}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition-transform hover:scale-105 active:scale-95 animate-pulse"
-          >
-            <ShieldAlert size={20} />
-            Start Next Wave
-          </button>
-        )}
+        {/* Controls */}
+        <div className="flex gap-2">
+            <button
+                onClick={toggleMute}
+                className="bg-slate-900/90 p-3 rounded-xl text-slate-400 hover:text-white border border-slate-700/50 hover:bg-slate-800 transition-all"
+            >
+                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
+            <button
+                onClick={() => engine?.current?.togglePause()}
+                className={`p-3 rounded-xl border transition-all ${gameState.isPaused
+                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/50'
+                    : 'bg-slate-900/90 text-slate-400 hover:text-white border-slate-700/50 hover:bg-slate-800'}`}
+            >
+                <Pause size={20} fill={gameState.isPaused ? "currentColor" : "none"} />
+            </button>
+        </div>
       </div>
 
+      {/* Wave Control (Floating) */}
+      {!gameState.waveActive && gameState.gameStarted && !gameState.isGameOver && !gameState.isPaused && (
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-auto">
+             <button
+                onClick={() => engine?.current?.startWave()}
+                className="group flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-8 py-3 rounded-full font-bold shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all hover:scale-105 active:scale-95 border border-emerald-400/30"
+              >
+                <ShieldAlert size={20} className="group-hover:animate-bounce" />
+                <span>DEPLOY NEXT WAVE</span>
+              </button>
+          </div>
+      )}
+
       {/* Center: Selected Tower Info */}
-      {selectedTower && (
-         <div className="pointer-events-auto self-center bg-gray-900/90 p-4 rounded-lg border border-gray-600 text-white w-64">
-             <div className="flex justify-between items-center mb-2">
-                 <h3 className="font-bold text-lg">{TOWERS[selectedTower.type].name}</h3>
-                 <button onClick={onDeselect} className="text-gray-400 hover:text-white">✕</button>
+      {selectedTower && !gameState.isGameOver && (
+         <div className="pointer-events-auto self-center bg-slate-900/95 p-5 rounded-2xl border border-slate-600/50 text-white w-72 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+             <div className="flex justify-between items-center mb-4 border-b border-slate-700/50 pb-2">
+                 <div className="flex items-center gap-3">
+                     <div className="w-4 h-4 rounded-full" style={{background: TOWERS[selectedTower.type].color, boxShadow: `0 0 10px ${TOWERS[selectedTower.type].color}`}} />
+                     <h3 className="font-bold text-lg tracking-wide">{TOWERS[selectedTower.type].name.toUpperCase()}</h3>
+                 </div>
+                 <button onClick={onDeselect} className="text-slate-500 hover:text-white transition-colors">✕</button>
              </div>
-             <div className="text-sm text-gray-300 mb-4">
-                 <p>Damage: {selectedTower.damage}</p>
-                 <p>Range: {selectedTower.range}</p>
-                 <p>Speed: {Math.round(60/selectedTower.maxCooldown * 10) / 10}/s</p>
+
+             <div className="space-y-2 mb-6 text-sm text-slate-300">
+                 <div className="flex justify-between">
+                     <span>Damage</span>
+                     <span className="font-mono text-white">{selectedTower.damage}</span>
+                 </div>
+                 <div className="flex justify-between">
+                     <span>Range</span>
+                     <span className="font-mono text-white">{selectedTower.range}px</span>
+                 </div>
+                 <div className="flex justify-between">
+                     <span>Fire Rate</span>
+                     <span className="font-mono text-white">{(60/selectedTower.maxCooldown).toFixed(1)}/s</span>
+                 </div>
              </div>
+
              <button
                 onClick={onSellTower}
-                className="w-full bg-red-600 hover:bg-red-500 text-white py-2 rounded font-semibold transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 hover:text-rose-200 border border-rose-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group"
              >
-                 Sell (${Math.floor(TOWERS[selectedTower.type].cost * 0.5)})
+                 <span>SELL UNIT</span>
+                 <span className="bg-rose-950/50 px-2 py-0.5 rounded text-xs font-mono group-hover:bg-rose-900/50">
+                     +${Math.floor(TOWERS[selectedTower.type].cost * 0.5)}
+                 </span>
              </button>
          </div>
       )}
 
       {/* Bottom Bar: Tower Selection */}
-      <div className="flex justify-center gap-4 pointer-events-auto">
-        {Object.entries(TOWERS).map(([key, tower]) => (
-          <button
-            key={key}
-            onClick={() => onSelectTower(selectedTowerType === key ? null : key as TowerType)}
-            disabled={gameState.money < tower.cost}
-            className={`
-              relative group flex flex-col items-center p-3 rounded-lg border-2 transition-all
-              ${selectedTowerType === key
-                ? 'bg-gray-700 border-blue-500 scale-110 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-                : 'bg-gray-800 border-gray-700 hover:border-gray-500 hover:bg-gray-750'}
-              ${gameState.money < tower.cost ? 'opacity-50 cursor-not-allowed grayscale' : ''}
-            `}
-          >
-            <div className="w-8 h-8 rounded mb-2" style={{ backgroundColor: tower.color }}></div>
-            <span className="text-white font-bold text-sm">{tower.name}</span>
-            <span className="text-yellow-400 font-mono text-xs">${tower.cost}</span>
+      <div className="flex justify-center gap-3 sm:gap-6 pointer-events-auto pb-4 sm:pb-8 w-full overflow-x-auto px-4">
+        {Object.entries(TOWERS).map(([key, tower]) => {
+            const isSelected = selectedTowerType === key;
+            const canAfford = gameState.money >= tower.cost;
 
-            {/* Tooltip */}
-            <div className="absolute bottom-full mb-2 hidden group-hover:block w-48 bg-gray-900 text-white text-xs p-2 rounded border border-gray-600 z-10">
-                 <p>Dmg: {tower.damage} | Rng: {tower.range}</p>
-                 <p className="text-gray-400 mt-1">Speed: Fast</p>
-            </div>
-          </button>
-        ))}
+            return (
+              <button
+                key={key}
+                onClick={() => onSelectTower(isSelected ? null : key as TowerType)}
+                disabled={!canAfford}
+                className={`
+                  relative group flex flex-col items-center p-3 sm:p-4 rounded-xl border transition-all duration-200 min-w-[90px]
+                  ${isSelected
+                    ? 'bg-slate-800 border-blue-400 ring-2 ring-blue-500/50 -translate-y-2 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.5)]'
+                    : 'bg-slate-900/80 border-slate-700 hover:border-slate-500 hover:bg-slate-800'}
+                  ${!canAfford ? 'opacity-40 cursor-not-allowed grayscale' : ''}
+                `}
+              >
+                <div
+                    className="w-10 h-10 rounded-lg mb-3 shadow-lg flex items-center justify-center transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: tower.color, boxShadow: isSelected ? `0 0 15px ${tower.color}` : 'none' }}
+                >
+                    {/* Simple Icon Representation */}
+                    {key === 'BASIC' && <div className="w-4 h-4 bg-white rounded-full" />}
+                    {key === 'SNIPER' && <div className="w-6 h-1 bg-white" />}
+                    {key === 'RAPID' && <div className="flex gap-0.5"><div className="w-1 h-4 bg-white"/><div className="w-1 h-4 bg-white"/><div className="w-1 h-4 bg-white"/></div>}
+                </div>
+
+                <span className={`font-bold text-xs sm:text-sm tracking-wider mb-1 ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                    {tower.name.toUpperCase()}
+                </span>
+                <span className={`font-mono text-xs ${canAfford ? 'text-amber-400' : 'text-slate-500'}`}>
+                    ${tower.cost}
+                </span>
+
+                {/* Stats Popup */}
+                <div className="absolute bottom-full mb-4 hidden group-hover:block w-48 bg-slate-900/95 text-white text-xs p-3 rounded-lg border border-slate-600 shadow-xl z-20 backdrop-blur-sm pointer-events-none">
+                     <div className="flex justify-between mb-1">
+                         <span className="text-slate-400">Damage</span>
+                         <span className="font-mono text-emerald-400">{tower.damage}</span>
+                     </div>
+                     <div className="flex justify-between mb-1">
+                         <span className="text-slate-400">Range</span>
+                         <span className="font-mono text-blue-400">{tower.range}</span>
+                     </div>
+                     <div className="flex justify-between">
+                         <span className="text-slate-400">Cooldown</span>
+                         <span className="font-mono text-amber-400">{tower.cooldown}f</span>
+                     </div>
+                     <div className="absolute bottom-[-5px] left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-b border-r border-slate-600 rotate-45"></div>
+                </div>
+              </button>
+            );
+        })}
       </div>
 
-      {/* Overlays */}
+      {/* Start Game Overlay */}
       {!gameState.gameStarted && !gameState.isGameOver && (
-        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 pointer-events-auto">
-          <div className="bg-gray-800 p-8 rounded-2xl border border-gray-600 text-center max-w-md shadow-2xl">
-            <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-6">
-              GRID DEFENSE
+        <div className="absolute inset-0 bg-slate-950/90 flex items-center justify-center z-50 pointer-events-auto backdrop-blur-sm">
+          <div className="bg-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-700/50 text-center max-w-lg shadow-[0_0_50px_rgba(59,130,246,0.15)] relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+
+            <h1 className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-400 mb-4 tracking-tight filter drop-shadow-lg">
+              NEON DEFENSE
             </h1>
-            <p className="text-gray-300 mb-8">
-              Defend the base from waves of enemies. Place towers strategically and manage your economy.
+            <p className="text-slate-400 mb-10 text-lg leading-relaxed">
+              Strategic tower defense in a cyberpunk grid.
+              <br/>Protect the core at all costs.
             </p>
+
             <button
-              onClick={() => engine?.startGame()}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xl font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-transform hover:scale-105"
+              onClick={() => {
+                  engine?.current?.startGame();
+                  soundManager.playShoot('BASIC'); // Sound check
+              }}
+              className="group relative w-full bg-blue-600 hover:bg-blue-500 text-white text-xl font-bold py-5 rounded-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(37,99,235,0.4)] overflow-hidden"
             >
-              <Play fill="currentColor" /> START GAME
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]" />
+              <Play fill="currentColor" size={24} />
+              <span>INITIALIZE SYSTEM</span>
             </button>
           </div>
         </div>
       )}
 
+      {/* Paused Overlay */}
+      {gameState.isPaused && !gameState.isGameOver && (
+          <div className="absolute inset-0 bg-slate-950/60 flex items-center justify-center z-40 pointer-events-auto backdrop-blur-sm">
+            <div className="bg-slate-900/90 p-8 rounded-2xl border border-slate-700 text-center shadow-2xl">
+                <h2 className="text-3xl font-bold text-white mb-6 tracking-widest">SYSTEM PAUSED</h2>
+                <button
+                  onClick={() => engine?.current?.togglePause()}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-colors flex items-center gap-2 mx-auto"
+                >
+                  <Play size={20} fill="currentColor" /> RESUME
+                </button>
+            </div>
+          </div>
+      )}
+
+      {/* Game Over Overlay */}
       {gameState.isGameOver && (
-        <div className="absolute inset-0 bg-red-900/80 flex items-center justify-center z-50 pointer-events-auto">
-          <div className="bg-gray-900 p-8 rounded-2xl border-2 border-red-500 text-center max-w-md shadow-2xl">
-            <h2 className="text-4xl font-black text-red-500 mb-2">GAME OVER</h2>
-            <p className="text-white text-xl mb-6">You survived {gameState.wave - 1} waves</p>
+        <div className="absolute inset-0 bg-red-950/90 flex items-center justify-center z-50 pointer-events-auto backdrop-blur-md">
+          <div className="bg-slate-900 p-10 rounded-3xl border-2 border-red-500/50 text-center max-w-md shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+            <h2 className="text-5xl font-black text-red-500 mb-2 tracking-tighter">CRITICAL FAILURE</h2>
+            <div className="h-1 w-20 bg-red-500 mx-auto my-6 rounded-full" />
+            <p className="text-slate-300 text-xl mb-2">Systems compromised at</p>
+            <p className="text-4xl font-bold text-white mb-8">Wave {gameState.wave - 1}</p>
+
             <button
               onClick={() => window.location.reload()}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white text-lg font-bold py-3 rounded-lg flex items-center justify-center gap-3"
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-colors border border-slate-600 hover:border-slate-500"
             >
-              <RotateCw /> TRY AGAIN
+              <RotateCw size={24} /> REBOOT SYSTEM
             </button>
           </div>
         </div>

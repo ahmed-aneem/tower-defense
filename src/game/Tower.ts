@@ -16,6 +16,9 @@ export class Tower implements ITower {
   targetId: string | null = null;
   color: string;
 
+  // Visual recoil
+  recoil: number = 0;
+
   constructor(position: Vector2, type: TowerType) {
     this.id = Math.random().toString(36).substr(2, 9);
     this.position = position;
@@ -31,6 +34,12 @@ export class Tower implements ITower {
   update(enemies: Enemy[]): Enemy | null {
     if (this.cooldownTimer > 0) {
       this.cooldownTimer--;
+    }
+
+    // Recover from recoil
+    if (this.recoil > 0) {
+        this.recoil *= 0.8;
+        if (this.recoil < 0.1) this.recoil = 0;
     }
 
     // Find target
@@ -62,6 +71,7 @@ export class Tower implements ITower {
     // Return target if ready to shoot
     if (this.cooldownTimer <= 0 && target) {
       this.cooldownTimer = this.maxCooldown;
+      this.recoil = 5; // Kick back
       return target;
     }
 
@@ -76,34 +86,67 @@ export class Tower implements ITower {
     if (isSelected) {
       ctx.beginPath();
       ctx.arc(0, 0, this.range, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
       ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
       ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     // Rotate turret
     ctx.rotate(this.rotation);
 
+    // Apply recoil (move backwards slightly)
+    ctx.translate(-this.recoil, 0);
+
+    // Glow effect
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.color;
+
     // Draw Base
-    ctx.fillStyle = '#4B5563'; // Gray base
-    ctx.fillRect(-12, -12, 24, 24);
+    ctx.fillStyle = '#1e293b'; // Slate 800
+    ctx.fillRect(-14, -14, 28, 28);
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-14, -14, 28, 28);
 
     // Draw Turret
     ctx.fillStyle = this.color;
+
     // Different shapes for different towers
     if (this.type === 'SNIPER') {
-      ctx.fillRect(-5, -5, 30, 10); // Long barrel
+      // Sniper Body
+      ctx.fillRect(-8, -8, 16, 16);
+      // Long barrel
+      ctx.fillRect(0, -3, 35, 6);
+      // Scope
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(5, -6, 3, 0, Math.PI * 2);
+      ctx.fill();
     } else if (this.type === 'RAPID') {
-      ctx.fillRect(-5, -8, 20, 6);
-      ctx.fillRect(-5, 2, 20, 6);
+      // Minigun body
+      ctx.beginPath();
+      ctx.arc(0, 0, 12, 0, Math.PI * 2);
+      ctx.fill();
+      // Barrels
+      ctx.fillRect(8, -6, 18, 4);
+      ctx.fillRect(8, 2, 18, 4);
     } else {
-      ctx.fillRect(0, -5, 20, 10);
+      // Basic
       ctx.beginPath();
       ctx.arc(0, 0, 10, 0, Math.PI * 2);
       ctx.fill();
+      ctx.fillRect(0, -4, 22, 8);
     }
+
+    // Center pin
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
   }
