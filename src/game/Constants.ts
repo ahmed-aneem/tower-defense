@@ -4,6 +4,30 @@ export const CELL_SIZE = 40;
 export const GAME_WIDTH = 1200; // Increased size for "mapa maior"
 export const GAME_HEIGHT = 800;
 
+export const DamageType = {
+  PHYSICAL: 'PHYSICAL',
+  EXPLOSIVE: 'EXPLOSIVE',
+  ENERGY: 'ENERGY',
+  COLD: 'COLD'
+} as const;
+export type DamageType = typeof DamageType[keyof typeof DamageType];
+
+export const DefenseType = {
+  NONE: 'NONE',
+  HEAVY: 'HEAVY', // Armored/Lead
+  SHIELDED: 'SHIELDED' // Energy Shield
+} as const;
+export type DefenseType = typeof DefenseType[keyof typeof DefenseType];
+
+export const TowerTargetingMode = {
+  FIRST: 'FIRST',
+  LAST: 'LAST',
+  STRONGEST: 'STRONGEST',
+  WEAKEST: 'WEAKEST',
+  CLOSEST: 'CLOSEST'
+} as const;
+export type TowerTargetingMode = typeof TowerTargetingMode[keyof typeof TowerTargetingMode];
+
 export const TOWERS = {
   BASIC: {
     name: 'Basic',
@@ -12,7 +36,9 @@ export const TOWERS = {
     damage: 15,
     cooldown: 30, // Frames
     color: '#3B82F6', // Blue
-    type: 'BASIC'
+    type: 'BASIC',
+    damageType: DamageType.PHYSICAL,
+    pierce: 1
   },
   SNIPER: {
     name: 'Sniper',
@@ -21,7 +47,9 @@ export const TOWERS = {
     damage: 100,
     cooldown: 120,
     color: '#10B981', // Green
-    type: 'SNIPER'
+    type: 'SNIPER',
+    damageType: DamageType.PHYSICAL,
+    pierce: 3
   },
   RAPID: {
     name: 'Minigun',
@@ -30,7 +58,9 @@ export const TOWERS = {
     damage: 5,
     cooldown: 5,
     color: '#F59E0B', // Amber
-    type: 'RAPID'
+    type: 'RAPID',
+    damageType: DamageType.PHYSICAL,
+    pierce: 1
   },
   FROST: {
     name: 'Frost',
@@ -39,7 +69,9 @@ export const TOWERS = {
     damage: 0, // Does slow instead
     cooldown: 5, // Applies constantly
     color: '#06b6d4', // Cyan
-    type: 'FROST'
+    type: 'FROST',
+    damageType: DamageType.COLD,
+    pierce: 999
   },
   SPLASH: {
     name: 'Cannon',
@@ -48,7 +80,9 @@ export const TOWERS = {
     damage: 40,
     cooldown: 90,
     color: '#ef4444', // Red
-    type: 'SPLASH'
+    type: 'SPLASH',
+    damageType: DamageType.EXPLOSIVE,
+    pierce: 20
   },
   LASER: {
     name: 'Laser',
@@ -57,7 +91,9 @@ export const TOWERS = {
     damage: 2, // Per frame
     cooldown: 0,
     color: '#d946ef', // Fuchsia
-    type: 'LASER'
+    type: 'LASER',
+    damageType: DamageType.ENERGY,
+    pierce: 5
   }
 } as const;
 
@@ -70,7 +106,7 @@ export const ENEMIES = {
     reward: 10,
     color: '#EF4444', // Red
     radius: 12,
-    isArmored: false
+    defenseType: DefenseType.NONE
   },
   FAST: {
     hp: 30,
@@ -78,7 +114,7 @@ export const ENEMIES = {
     reward: 15,
     color: '#EC4899', // Pink
     radius: 10,
-    isArmored: false
+    defenseType: DefenseType.NONE
   },
   TANK: {
     hp: 200,
@@ -86,7 +122,7 @@ export const ENEMIES = {
     reward: 30,
     color: '#7F1D1D', // Dark Red
     radius: 16,
-    isArmored: true
+    defenseType: DefenseType.HEAVY
   },
   SWARM: {
     hp: 15,
@@ -94,7 +130,7 @@ export const ENEMIES = {
     reward: 5,
     color: '#f97316', // Orange
     radius: 8,
-    isArmored: false
+    defenseType: DefenseType.NONE
   },
   ARMORED: {
     hp: 150,
@@ -102,7 +138,7 @@ export const ENEMIES = {
     reward: 25,
     color: '#57534e', // Stone
     radius: 14,
-    isArmored: true
+    defenseType: DefenseType.HEAVY
   },
   BOSS: {
     hp: 1000,
@@ -110,7 +146,7 @@ export const ENEMIES = {
     reward: 200,
     color: '#4c1d95', // Violet
     radius: 25,
-    isArmored: true
+    defenseType: DefenseType.SHIELDED
   }
 } as const;
 

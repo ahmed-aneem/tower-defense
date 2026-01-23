@@ -5,15 +5,22 @@ export class Particle implements IParticle {
   id: string;
   position: Vector2;
   velocity: Vector2;
-  life: number;
-  maxLife: number;
+  life!: number;
+  maxLife!: number;
   color: string;
-  size: number;
-  decay: number;
+  size!: number;
+  decay!: number;
   text?: string;
 
   constructor(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string) {
     this.id = Math.random().toString(36).substr(2, 9);
+    this.position = position.clone();
+    this.color = color;
+    this.velocity = new Vector2(0,0);
+    this.reset(position, color, speedMultiplier, sizeMultiplier, text);
+  }
+
+  reset(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string) {
     this.position = position.clone();
     this.color = color;
     this.text = text;

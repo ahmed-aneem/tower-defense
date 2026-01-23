@@ -1,6 +1,6 @@
 import { Vector2 } from './Vector';
 import { type IEnemy, type EnemyType } from '../types';
-import { PATH_WAYPOINTS, ENEMIES } from './Constants';
+import { PATH_WAYPOINTS, ENEMIES, DefenseType } from './Constants';
 
 export class Enemy implements IEnemy {
   id: string;
@@ -15,9 +15,9 @@ export class Enemy implements IEnemy {
   radius: number;
   color: string;
   type: EnemyType;
-  isArmored: boolean;
+  defenseType: DefenseType;
 
-  private waypointIndex: number = 0;
+  waypointIndex: number = 0;
   private path: Vector2[] = PATH_WAYPOINTS;
   private wobbleOffset: number = Math.random() * 100;
 
@@ -31,7 +31,7 @@ export class Enemy implements IEnemy {
     this.reward = config.reward;
     this.radius = config.radius;
     this.color = config.color;
-    this.isArmored = config.isArmored;
+    this.defenseType = config.defenseType;
 
     // Start at the first waypoint
     this.position = this.path[0].clone();
@@ -134,12 +134,7 @@ export class Enemy implements IEnemy {
   }
 
   takeDamage(amount: number) {
-    let finalDamage = amount;
-    if (this.isArmored) {
-        finalDamage = Math.max(1, amount * 0.5); // 50% damage reduction
-    }
-
-    this.hp -= finalDamage;
+    this.hp -= amount;
     if (this.hp <= 0) {
       this.hp = 0;
       this.isDead = true;

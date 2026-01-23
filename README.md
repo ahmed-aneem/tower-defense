@@ -6,15 +6,20 @@ A strategic Tower Defense game built with React, TypeScript, and HTML5 Canvas.
 
 - **Strategic Gameplay**: Place towers to defend your core from waves of enemies.
 - **6 Tower Types**: Basic, Sniper, Minigun, Frost, Cannon, and Laser.
+- **Advanced Mechanics**:
+  - **Damage Types**: Physical, Explosive, Energy.
+  - **Defense System**: Armored and Shielded enemies require specific counters.
+  - **Targeting Priorities**: Configure each tower to target First, Last, Strongest, Weakest, or Closest.
 - **Tower Upgrades**: Upgrade towers to increase damage, range, and fire rate (up to Level 3).
 - **Special Abilities**: Call down an **Orbital Strike** to decimate enemies.
 - **Diverse Enemies**: Face off against fast swarms, armored tanks, and massive bosses.
 - **Retro-Modern Visuals**: Clean, flat neon aesthetic with particle effects.
+- **Performance Optimized**: Object pooling ensures smooth gameplay on mobile and desktop.
 - **Synthesized Audio**: No external assets; all sound is generated procedurally.
 
 ## Tech Stack
 
-- React 18
+- React 19
 - TypeScript
 - Vite
 - Tailwind CSS
