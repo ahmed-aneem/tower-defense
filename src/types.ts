@@ -30,6 +30,8 @@ export interface ITower extends GameEntity {
   rotation: number;
   level: number;
   targetId: string | null;
+  upgradeCost: number;
+  upgrade(): void;
   update(enemies?: Enemy[]): Enemy | null;
 }
 
@@ -49,4 +51,5 @@ export interface IParticle extends GameEntity {
   maxLife: number;
   color: string;
   size: number;
+  text?: string;
 }

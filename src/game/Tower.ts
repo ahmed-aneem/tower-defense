@@ -31,6 +31,29 @@ export class Tower implements ITower {
     this.color = config.color;
   }
 
+  get upgradeCost(): number {
+    const baseCost = TOWERS[this.type].cost;
+    if (this.level === 1) return Math.floor(baseCost * 0.8);
+    if (this.level === 2) return Math.floor(baseCost * 1.5);
+    return 0;
+  }
+
+  upgrade() {
+    if (this.level >= 3) return;
+
+    this.level++;
+
+    if (this.level === 2) {
+        this.damage = Math.ceil(this.damage * 1.5);
+        this.range = Math.ceil(this.range * 1.2);
+    } else if (this.level === 3) {
+        this.damage = Math.ceil(this.damage * 1.5);
+        this.maxCooldown = Math.max(1, Math.floor(this.maxCooldown * 0.8));
+    }
+
+    this.recoil = 10;
+  }
+
   update(enemies: Enemy[]): Enemy | null {
     if (this.cooldownTimer > 0) {
       this.cooldownTimer--;
@@ -138,6 +161,18 @@ export class Tower implements ITower {
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2;
     ctx.strokeRect(-14, -14, 28, 28);
+
+    // Level Indicators
+    if (this.level >= 2) {
+         ctx.strokeStyle = '#FCD34D'; // Amber 300
+         ctx.lineWidth = 2;
+         ctx.strokeRect(-17, -17, 34, 34); // Gold ring
+    }
+    if (this.level >= 3) {
+         ctx.strokeStyle = '#fff';
+         ctx.lineWidth = 1;
+         ctx.strokeRect(-20, -20, 40, 40); // Outer white ring
+    }
 
     // Draw Turret
     ctx.fillStyle = this.color;
