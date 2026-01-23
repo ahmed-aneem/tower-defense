@@ -158,6 +158,50 @@ export class GameEngine {
       this.notifyState();
   }
 
+  upgradeTower(tower: Tower) {
+      const cost = tower.upgradeCost;
+      if (this.state.money >= cost && tower.level < 3) {
+          this.state.money -= cost;
+          tower.upgrade();
+          this.createFloatingText(tower.position, "LEVEL UP!", "#FCD34D");
+          this.createExplosion(tower.position, "#FCD34D", 10, 1.5);
+          soundManager.playShoot('BASIC'); // Generic sound for now
+          this.notifyState();
+      }
+  }
+
+  activateAbility(name: string) {
+      if (name === 'ORBITAL_STRIKE') {
+          const COST = 500;
+          if (this.state.money >= COST) {
+              this.state.money -= COST;
+
+              // Effect
+              this.enemies.forEach(e => {
+                  e.takeDamage(500); // Massive damage
+                  this.createExplosion(e.position, '#FFF', 5, 1);
+              });
+
+              // Global flash (can simply add many particles or handle in draw)
+              // Let's add big particles
+              for(let i=0; i<20; i++) {
+                  this.particles.push(new Particle(
+                      new Vector2(Math.random() * this.canvas.width, Math.random() * this.canvas.height),
+                      '#FFF',
+                      5,
+                      5
+                  ));
+              }
+
+              this.createFloatingText(new Vector2(this.canvas.width/2, this.canvas.height/2), "ORBITAL STRIKE", "#FFF");
+              this.shakeIntensity = 20;
+              soundManager.playExplosion(); // Reuse explosion sound
+
+              this.notifyState();
+          }
+      }
+  }
+
   getTowerAt(pos: Vector2): Tower | null {
       for (const t of this.towers) {
           if (pos.distanceTo(t.position) < 20) return t;
@@ -215,6 +259,7 @@ export class GameEngine {
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       if (this.enemies[i].reachedEnd) {
         this.state.lives--;
+        this.createFloatingText(this.enemies[i].position, "-1 HP", "#F43F5E");
         this.shakeIntensity = 10; // Shake when taking damage
         soundManager.playHit();
         this.enemies.splice(i, 1);
@@ -299,6 +344,7 @@ export class GameEngine {
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       if (this.enemies[i].isDead) {
         this.state.money += this.enemies[i].reward;
+        this.createFloatingText(this.enemies[i].position, `+$${this.enemies[i].reward}`, '#FCD34D');
         this.createExplosion(this.enemies[i].position, '#FFF', 15, 1.5);
         soundManager.playExplosion();
         this.shakeIntensity = Math.min(this.shakeIntensity + 2, 10);
@@ -322,6 +368,10 @@ export class GameEngine {
     for (let i = 0; i < count; i++) {
       this.particles.push(new Particle(pos, color, scale, scale));
     }
+  }
+
+  private createFloatingText(pos: Vector2, text: string, color: string) {
+      this.particles.push(new Particle(pos, color, 1, 1, text));
   }
 
   private draw() {

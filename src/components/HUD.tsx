@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap } from 'lucide-react';
 import { type GameState, GameEngine } from '../game/GameEngine';
 import { TOWERS, type TowerType } from '../game/Constants';
 import { Tower } from '../game/Tower';
@@ -110,16 +110,52 @@ export const HUD: React.FC<HUDProps> = ({
                  </div>
              </div>
 
-             <button
-                onClick={onSellTower}
-                className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 hover:text-rose-200 border border-rose-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group"
-             >
-                 <span>SELL UNIT</span>
-                 <span className="bg-rose-950/50 px-2 py-0.5 rounded text-xs font-mono group-hover:bg-rose-900/50">
-                     +${Math.floor(TOWERS[selectedTower.type].cost * 0.5)}
-                 </span>
-             </button>
+             <div className="flex gap-2">
+                <button
+                    onClick={onSellTower}
+                    className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 hover:text-rose-200 border border-rose-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group"
+                >
+                    <span>SELL</span>
+                    <span className="bg-rose-950/50 px-2 py-0.5 rounded text-xs font-mono group-hover:bg-rose-900/50">
+                        +${Math.floor(TOWERS[selectedTower.type].cost * 0.5)}
+                    </span>
+                </button>
+
+                {selectedTower.level < 3 ? (
+                  <button
+                     onClick={() => engine?.current?.upgradeTower(selectedTower)}
+                     disabled={gameState.money < selectedTower.upgradeCost}
+                     className={`w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 hover:text-amber-200 border border-amber-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                     <span>UPGRADE</span>
+                     <span className="bg-amber-950/50 px-2 py-0.5 rounded text-xs font-mono group-hover:bg-amber-900/50">
+                         -${selectedTower.upgradeCost}
+                     </span>
+                  </button>
+                ) : (
+                  <div className="w-full bg-slate-800 text-slate-500 py-2.5 rounded-lg font-bold text-center border border-slate-700">
+                     MAX LEVEL
+                  </div>
+                )}
+             </div>
          </div>
+      )}
+
+      {/* Special Abilities */}
+      {gameState.gameStarted && !gameState.isGameOver && (
+          <div className="absolute bottom-32 right-4 pointer-events-auto z-20">
+              <button
+                  onClick={() => engine?.current?.activateAbility('ORBITAL_STRIKE')}
+                  disabled={gameState.money < 500}
+                  className={`bg-red-600 hover:bg-red-500 text-white p-4 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)] border-4 border-red-800 transition-all active:scale-95 flex flex-col items-center gap-1 group relative overflow-hidden ${gameState.money < 500 ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110'}`}
+                  title="Orbital Strike ($500)"
+              >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                  <Zap size={24} fill="currentColor" className={`${gameState.money >= 500 ? 'animate-pulse' : ''}`} />
+                  <span className="text-[10px] font-black tracking-wider shadow-black drop-shadow-md">NUKE</span>
+                  <span className="text-[10px] font-mono bg-black/30 px-1 rounded">$500</span>
+              </button>
+          </div>
       )}
 
       {/* Bottom Bar: Tower Selection */}
