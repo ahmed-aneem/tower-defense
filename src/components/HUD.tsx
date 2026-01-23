@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap } from 'lucide-react';
+import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair } from 'lucide-react';
 import { type GameState, GameEngine } from '../game/GameEngine';
-import { TOWERS, type TowerType } from '../game/Constants';
+import { TOWERS, type TowerType, TowerTargetingMode } from '../game/Constants';
 import { Tower } from '../game/Tower';
 import { soundManager } from '../game/SoundManager';
 
@@ -25,10 +25,20 @@ export const HUD: React.FC<HUDProps> = ({
   onDeselect
 }) => {
   const [isMuted, setIsMuted] = useState(false);
+  const [, forceUpdate] = useState(0);
 
   const toggleMute = () => {
     soundManager.toggleMute();
     setIsMuted(!isMuted);
+  };
+
+  const cycleTargetingMode = () => {
+      if (!selectedTower) return;
+      const modes = Object.values(TowerTargetingMode);
+      const currentIndex = modes.indexOf(selectedTower.targetingMode);
+      const nextIndex = (currentIndex + 1) % modes.length;
+      selectedTower.setTargetingMode(modes[nextIndex]);
+      forceUpdate(n => n + 1);
   };
 
   return (
@@ -108,7 +118,27 @@ export const HUD: React.FC<HUDProps> = ({
                      <span>Fire Rate</span>
                      <span className="font-mono text-white">{(60/selectedTower.maxCooldown).toFixed(1)}/s</span>
                  </div>
+                 <div className="flex justify-between">
+                     <span>Pierce</span>
+                     <span className="font-mono text-white">{selectedTower.pierce}</span>
+                 </div>
+                 <div className="flex justify-between">
+                     <span>Type</span>
+                     <span className="font-mono text-white text-[10px] bg-slate-800 px-1 rounded">{selectedTower.damageType}</span>
+                 </div>
              </div>
+
+             {/* Targeting Control */}
+             <button
+                onClick={cycleTargetingMode}
+                className="w-full mb-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 p-3 rounded-lg flex items-center justify-between group transition-colors"
+             >
+                <div className="flex items-center gap-2 text-slate-300">
+                    <Crosshair size={16} />
+                    <span className="text-xs font-bold uppercase">Target Priority</span>
+                </div>
+                <span className="font-mono text-cyan-400 font-bold">{selectedTower.targetingMode}</span>
+             </button>
 
              <div className="flex gap-2">
                 <button

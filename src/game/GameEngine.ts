@@ -2,8 +2,9 @@ import { Enemy } from './Enemy';
 import { Tower } from './Tower';
 import { Projectile } from './Projectile';
 import { Particle } from './Particle';
+import { ObjectPool } from './ObjectPool';
 import { Vector2 } from './Vector';
-import { GAME_WIDTH, GAME_HEIGHT, PATH_WAYPOINTS, TOWERS, type TowerType } from './Constants';
+import { GAME_WIDTH, GAME_HEIGHT, PATH_WAYPOINTS, TOWERS, type TowerType, DamageType, DefenseType } from './Constants';
 import { type EnemyType } from '../types';
 import { soundManager } from './SoundManager';
 
@@ -25,6 +26,9 @@ export class GameEngine {
   towers: Tower[] = [];
   projectiles: Projectile[] = [];
   particles: Particle[] = [];
+
+  projectilePool: ObjectPool<Projectile>;
+  particlePool: ObjectPool<Particle>;
 
   state: GameState = {
     money: 300,
@@ -48,6 +52,17 @@ export class GameEngine {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.onStateChange = onStateChange;
+
+    // Init Pools
+    this.projectilePool = new ObjectPool<Projectile>(
+        () => new Projectile(new Vector2(0,0), new Vector2(0,0), 0, ''),
+        (p, start, target, dmg, col, type, pierce, splash, rad) => p.reset(start, target, dmg, col, type, pierce, splash, rad)
+    );
+
+    this.particlePool = new ObjectPool<Particle>(
+        () => new Particle(new Vector2(0,0), ''),
+        (p, pos, col, speed, size, txt) => p.reset(pos, col, speed, size, txt)
+    );
 
     // Set canvas size
     this.updateCanvasSize();
@@ -185,7 +200,7 @@ export class GameEngine {
               // Global flash (can simply add many particles or handle in draw)
               // Let's add big particles
               for(let i=0; i<20; i++) {
-                  this.particles.push(new Particle(
+                  this.particles.push(this.particlePool.get(
                       new Vector2(Math.random() * this.canvas.width, Math.random() * this.canvas.height),
                       '#FFF',
                       5,
@@ -290,7 +305,7 @@ export class GameEngine {
             // Standard Projectile
             const isSplash = t.type === 'SPLASH';
             const splashRadius = isSplash ? 60 : 0;
-            this.projectiles.push(new Projectile(t.position, target.position, t.damage, t.color, isSplash, splashRadius));
+            this.projectiles.push(this.projectilePool.get(t.position, target.position, t.damage, t.color, t.damageType, t.pierce, isSplash, splashRadius));
             soundManager.playShoot(t.type);
             // Add shoot particle
             this.createExplosion(t.position, t.color, 3, 0.5);
@@ -306,37 +321,57 @@ export class GameEngine {
       const p = this.projectiles[i];
       if (!p.active) {
         this.projectiles.splice(i, 1);
+        this.projectilePool.release(p);
         continue;
       }
 
-      let hit = false;
       for (const e of this.enemies) {
-        if (e.isDead) continue;
+        if (e.isDead || p.hitList.has(e.id)) continue;
+
         if (p.position.distanceTo(e.position) < e.radius + 5) {
-            hit = true;
+            // Hit logic
+            p.hitList.add(e.id);
+
+            // Calculate Damage
+            const finalDamage = this.calculateDamage(p.damage, p.damageType, e.defenseType);
 
             if (p.isSplash) {
-                // Splash Damage
+                // Splash Damage - Explode immediately
                 this.enemies.forEach(nearby => {
                     if (nearby.isDead) return;
                     if (nearby.position.distanceTo(p.position) <= p.splashRadius) {
-                        // Falloff damage? No, full damage for now.
-                        nearby.takeDamage(p.damage);
+                         const splashDmg = this.calculateDamage(p.damage, p.damageType, nearby.defenseType);
+                         nearby.takeDamage(splashDmg);
+                         if (splashDmg <= 0) this.createFloatingText(nearby.position, "IMMUNE", "#fff");
                     }
                 });
-                this.createExplosion(p.position, p.color, 20, 1.5); // Bigger explosion
+                this.createExplosion(p.position, p.color, 20, 1.5);
                 soundManager.playExplosion();
+                p.active = false; // Splash always dies
             } else {
                 // Single Target
-                e.takeDamage(p.damage);
-                this.createExplosion(p.position, p.color, 5, 0.5);
+                e.takeDamage(finalDamage);
+                if (finalDamage <= 0) {
+                    this.createFloatingText(e.position, "IMMUNE", "#fff");
+                } else {
+                    this.createExplosion(p.position, p.color, 5, 0.5);
+                }
+
+                p.pierce--;
+                if (p.pierce <= 0) {
+                    p.active = false;
+                }
             }
-            break;
+
+            // If splash, we broke early via p.active = false check next loop, but we should break inner loop
+            if (!p.active) break;
         }
       }
 
-      if (hit) {
-        this.projectiles.splice(i, 1);
+      // If we finished checking all enemies and projectile died
+      if (!p.active) {
+          this.projectiles.splice(i, 1);
+          this.projectilePool.release(p);
       }
     }
 
@@ -354,8 +389,14 @@ export class GameEngine {
     }
 
     // Update Particles
-    this.particles.forEach(p => p.update());
-    this.particles = this.particles.filter(p => p.life > 0);
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.update();
+      if (p.life <= 0) {
+          this.particles.splice(i, 1);
+          this.particlePool.release(p);
+      }
+    }
 
     // Decay shake
     if (this.shakeIntensity > 0) {
@@ -366,12 +407,24 @@ export class GameEngine {
 
   private createExplosion(pos: Vector2, color: string, count: number, scale: number = 1) {
     for (let i = 0; i < count; i++) {
-      this.particles.push(new Particle(pos, color, scale, scale));
+      this.particles.push(this.particlePool.get(pos, color, scale, scale));
     }
   }
 
   private createFloatingText(pos: Vector2, text: string, color: string) {
-      this.particles.push(new Particle(pos, color, 1, 1, text));
+      this.particles.push(this.particlePool.get(pos, color, 1, 1, text));
+  }
+
+  private calculateDamage(amount: number, type: DamageType, defense: DefenseType): number {
+      if (defense === DefenseType.HEAVY) {
+          if (type === DamageType.PHYSICAL) return Math.floor(amount * 0.5);
+          if (type === DamageType.EXPLOSIVE) return Math.floor(amount * 1.5);
+      } else if (defense === DefenseType.SHIELDED) {
+          if (type === DamageType.PHYSICAL) return amount; // Neutral
+          if (type === DamageType.EXPLOSIVE) return Math.floor(amount * 0.5);
+          if (type === DamageType.ENERGY) return Math.floor(amount * 1.5);
+      }
+      return amount;
   }
 
   private draw() {

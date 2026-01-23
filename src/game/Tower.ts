@@ -1,6 +1,6 @@
 import { Vector2 } from './Vector';
 import { type ITower } from '../types';
-import { TOWERS, type TowerType } from './Constants';
+import { TOWERS, type TowerType, DamageType, TowerTargetingMode } from './Constants';
 import { Enemy } from './Enemy';
 
 export class Tower implements ITower {
@@ -16,6 +16,10 @@ export class Tower implements ITower {
   targetId: string | null = null;
   color: string;
 
+  targetingMode: TowerTargetingMode = TowerTargetingMode.FIRST;
+  damageType: DamageType;
+  pierce: number;
+
   // Visual recoil
   recoil: number = 0;
 
@@ -29,6 +33,8 @@ export class Tower implements ITower {
     this.damage = config.damage;
     this.maxCooldown = config.cooldown;
     this.color = config.color;
+    this.damageType = config.damageType;
+    this.pierce = config.pierce;
   }
 
   get upgradeCost(): number {
@@ -46,12 +52,18 @@ export class Tower implements ITower {
     if (this.level === 2) {
         this.damage = Math.ceil(this.damage * 1.5);
         this.range = Math.ceil(this.range * 1.2);
+        this.pierce += 1;
     } else if (this.level === 3) {
         this.damage = Math.ceil(this.damage * 1.5);
         this.maxCooldown = Math.max(1, Math.floor(this.maxCooldown * 0.8));
+        this.pierce += 2;
     }
 
     this.recoil = 10;
+  }
+
+  setTargetingMode(mode: TowerTargetingMode) {
+      this.targetingMode = mode;
   }
 
   update(enemies: Enemy[]): Enemy | null {
@@ -65,27 +77,71 @@ export class Tower implements ITower {
         if (this.recoil < 0.1) this.recoil = 0;
     }
 
-    // Find target
-    let target: Enemy | null = null;
-    let minDist = Infinity;
-
-    // Simple strategy: Closest enemy
-    // Could improve to "First in line" or "Most HP"
-    for (const enemy of enemies) {
-      if (enemy.isDead || enemy.reachedEnd) continue;
-
-      const dist = this.position.distanceTo(enemy.position);
-      if (dist <= this.range && dist < minDist) {
-        minDist = dist;
-        target = enemy;
-      }
+    // Optimization: Frost logic separate (AOE)
+    if (this.type === 'FROST') {
+        if (this.cooldownTimer <= 0) {
+             for (const e of enemies) {
+                 if (!e.isDead && !e.reachedEnd && this.position.distanceTo(e.position) <= this.range) {
+                     e.freezeFactor = 0.5;
+                 }
+             }
+             this.cooldownTimer = this.maxCooldown;
+        }
+        return null;
     }
 
+    // Single pass targeting
+    let target: Enemy | null = null;
+    let bestMetric = this.targetingMode === TowerTargetingMode.WEAKEST || this.targetingMode === TowerTargetingMode.LAST || this.targetingMode === TowerTargetingMode.CLOSEST
+                     ? Infinity : -Infinity;
+
+    for (const e of enemies) {
+        if (e.isDead || e.reachedEnd) continue;
+        const dist = this.position.distanceTo(e.position);
+        if (dist > this.range) continue;
+
+        let metric = 0;
+        switch (this.targetingMode) {
+            case TowerTargetingMode.FIRST:
+                metric = e.waypointIndex;
+                if (metric > bestMetric) { bestMetric = metric; target = e; }
+                break;
+            case TowerTargetingMode.LAST:
+                metric = e.waypointIndex;
+                if (metric < bestMetric) { bestMetric = metric; target = e; }
+                break;
+            case TowerTargetingMode.STRONGEST:
+                metric = e.hp;
+                if (metric > bestMetric) { bestMetric = metric; target = e; }
+                break;
+            case TowerTargetingMode.WEAKEST:
+                metric = e.hp;
+                if (metric < bestMetric) { bestMetric = metric; target = e; }
+                break;
+            case TowerTargetingMode.CLOSEST:
+                metric = dist;
+                if (metric < bestMetric) { bestMetric = metric; target = e; }
+                break;
+        }
+
+        // Initial set if first valid candidate (and using First/Strongest which start at -Infinity needs care, but logic above handles it mostly)
+        // Wait, if bestMetric is -Infinity, ANY metric > -Infinity wins.
+        // If bestMetric is Infinity, ANY metric < Infinity wins.
+        // Logic above is: if (metric > bestMetric) -> update.
+        // For Closest (Infinity), if (metric < bestMetric) -> update. Correct.
+    }
+
+    // If no target found yet but candidates exist, pick first?
+    // The loop above picks the BEST. If none met condition (all out of range), target is null.
+    // However, for FIRST/STRONGEST, init is -Infinity.
+    // If e.waypointIndex is 0, 0 > -Infinity. True.
+    // Correct.
+
     if (target) {
-      this.targetId = target.id;
+      this.targetId = (target as Enemy).id;
       // Calculate rotation to face target
-      const dy = target.position.y - this.position.y;
-      const dx = target.position.x - this.position.x;
+      const dy = (target as Enemy).position.y - this.position.y;
+      const dx = (target as Enemy).position.x - this.position.x;
       this.rotation = Math.atan2(dy, dx);
     } else {
       this.targetId = null;
@@ -93,31 +149,10 @@ export class Tower implements ITower {
 
     // Return target if ready to shoot
     if (this.cooldownTimer <= 0 && target) {
-      // Special handling for Laser & Frost (continuous/AOE) or standard shoot
-
-      // For FROST, we don't return a target to 'shoot' a projectile, but we apply slow here (or in Engine)
-      // Actually, standard pattern is Engine calls update(), if it returns Enemy, Engine creates projectile.
-      // For FROST and LASER, we might want to return null here and handle logic inside update?
-      // Or return target and let Engine handle type check.
-
-      // For LASER: We want to deal damage every frame, so cooldown is 0.
-      // For FROST: We want to apply slow to ALL enemies in range.
-
-      if (this.type === 'FROST') {
-          // Slow all enemies in range
-          enemies.forEach(e => {
-             if (e.position.distanceTo(this.position) <= this.range) {
-                 e.freezeFactor = 0.5;
-             }
-          });
-          // Frost doesn't shoot projectiles
-          return null;
-      }
-
       if (this.type === 'LASER') {
-          // Continuous damage
-           target.takeDamage(this.damage);
-           return target; // Return target for visual beam drawing in Engine (or draw here)
+           // Continuous damage
+           (target as Enemy).takeDamage(this.damage);
+           return target;
       }
 
       this.cooldownTimer = this.maxCooldown;

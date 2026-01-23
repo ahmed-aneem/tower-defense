@@ -1,5 +1,5 @@
 import { Vector2 } from './game/Vector';
-import { type TowerType } from './game/Constants';
+import { type TowerType, DamageType, DefenseType, TowerTargetingMode } from './game/Constants';
 
 export interface GameEntity {
   id: string;
@@ -18,7 +18,7 @@ export interface IEnemy extends GameEntity {
   reachedEnd: boolean;
   reward: number;
   freezeFactor: number; // 1 = normal, 0 = stopped
-  isArmored: boolean;
+  defenseType: DefenseType;
 }
 
 import { type Enemy } from './game/Enemy';
@@ -31,6 +31,9 @@ export interface ITower extends GameEntity {
   level: number;
   targetId: string | null;
   upgradeCost: number;
+  targetingMode: TowerTargetingMode;
+  damageType: DamageType;
+  pierce: number;
   upgrade(): void;
   update(enemies?: Enemy[]): Enemy | null;
 }
@@ -43,6 +46,9 @@ export interface IProjectile extends GameEntity {
   color: string;
   isSplash: boolean;
   splashRadius: number;
+  pierce: number;
+  damageType: DamageType;
+  hitList: Set<string>;
 }
 
 export interface IParticle extends GameEntity {
