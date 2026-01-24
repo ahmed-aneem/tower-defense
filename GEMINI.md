@@ -8,7 +8,9 @@ This is a modern Tower Defense game built with React, TypeScript, and HTML5 Canv
 - **Game Engine**: `src/game/GameEngine.ts` manages the core game loop, canvas rendering, and entity management.
 - **Entities**: Towers, Enemies, Projectiles, and Particles are classes in `src/game/`.
 - **UI**: The HUD overlay is a React component (`src/components/HUD.tsx`) that communicates with the engine via a Ref and State callbacks.
-- **State Management**: The Engine notifies React of state changes (money, lives, wave) to update the HUD.
+- **State Management**: The Engine notifies React of state changes (money, lives, wave, active mods) to update the HUD.
+- **Maps**: Maps are defined in `src/game/Maps.ts`. The Engine is re-initialized when the map changes.
+- **Mods**: A roguelite system where players pick upgrades every 5 waves. Logic in `src/game/Mods.ts` and `GameEngine.ts`.
 - **Performance**: Uses `ObjectPool` for high-frequency entities (Projectiles, Particles) to ensure 60FPS on mobile.
 
 ## Features
@@ -16,6 +18,8 @@ This is a modern Tower Defense game built with React, TypeScript, and HTML5 Canv
 - **Towers**: 6 Types (Basic, Sniper, Rapid, Frost, Splash, Laser).
 - **Upgrades**: Towers can be upgraded to Level 3, gaining stats and visual changes.
 - **Targeting**: Towers have configurable targeting priorities (First, Last, Strongest, Weakest, Closest).
+- **Maps**: 3 distinct layouts with different strategies.
+- **Mods**: System upgrades (Damage, Range, Economy, etc.) offered periodically.
 - **Mechanics**:
     - **Damage Types**: Physical, Explosive, Energy, Cold.
     - **Resistances**: Enemies can be Heavy (Armored) or Shielded.
