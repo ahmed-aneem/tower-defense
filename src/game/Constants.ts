@@ -1,5 +1,3 @@
-import { Vector2 } from './Vector';
-
 export const CELL_SIZE = 40;
 export const GAME_WIDTH = 1200; // Increased size for "mapa maior"
 export const GAME_HEIGHT = 800;
@@ -150,20 +148,4 @@ export const ENEMIES = {
   }
 } as const;
 
-// Define a larger, more complex winding path
-export const PATH_WAYPOINTS = [
-  new Vector2(0, 100),
-  new Vector2(200, 100),
-  new Vector2(200, 300),
-  new Vector2(100, 300),
-  new Vector2(100, 500),
-  new Vector2(400, 500),
-  new Vector2(400, 200),
-  new Vector2(600, 200),
-  new Vector2(600, 400),
-  new Vector2(800, 400),
-  new Vector2(800, 150),
-  new Vector2(1000, 150),
-  new Vector2(1000, 600),
-  new Vector2(1200, 600)
-];
+// Path is now dynamic via Maps.ts

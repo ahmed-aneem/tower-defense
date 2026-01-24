@@ -8,26 +8,25 @@ This is a modern Tower Defense game built with React, TypeScript, and HTML5 Canv
 - **Game Engine**: `src/game/GameEngine.ts` manages the core game loop, canvas rendering, and entity management.
 - **Entities**: Towers, Enemies, Projectiles, and Particles are classes in `src/game/`.
 - **UI**: The HUD overlay is a React component (`src/components/HUD.tsx`) that communicates with the engine via a Ref and State callbacks.
-- **Input**: Unified Pointer Events (Drag and Drop) handled in `App.tsx` and propagated to `GameEngine`.
-- **Systems**:
-  - `WaveManager`: Handles structured wave progression (`src/game/WaveManager.ts`).
-  - `DamageSystem`: Centralizes damage/armor logic (`src/game/DamageSystem.ts`).
-- **State Management**: The Engine notifies React of state changes (money, lives, wave) to update the HUD.
+- **State Management**: The Engine notifies React of state changes (money, lives, wave, active mods) to update the HUD.
+- **Maps**: Maps are defined in `src/game/Maps.ts`. The Engine is re-initialized when the map changes.
+- **Mods**: A roguelite system where players pick upgrades every 5 waves. Logic in `src/game/Mods.ts` and `GameEngine.ts`.
 - **Performance**: Uses `ObjectPool` for high-frequency entities (Projectiles, Particles) to ensure 60FPS on mobile.
 
 ## Features
 
 - **Towers**: 6 Types (Basic, Sniper, Rapid, Frost, Splash, Laser).
-- **Controls**: Mobile-first Drag-and-Drop placement with visual range/validity preview.
 - **Upgrades**: Towers can be upgraded to Level 3, gaining stats and visual changes.
 - **Targeting**: Towers have configurable targeting priorities (First, Last, Strongest, Weakest, Closest).
+- **Maps**: 3 distinct layouts with different strategies.
+- **Mods**: System upgrades (Damage, Range, Economy, etc.) offered periodically.
 - **Mechanics**:
     - **Damage Types**: Physical, Explosive, Energy, Cold.
     - **Resistances**: Enemies can be Heavy (Armored) or Shielded.
     - **Pierce**: Projectiles can hit multiple enemies.
 - **Abilities**: "Orbital Strike" (Nuke) ability to clear enemies.
 - **Enemies**: Various types with different speeds, health, and defenses.
-- **Wave System**: Structured rounds inspired by BTD6 with grouped spawns.
+- **Wave System**: Progressive difficulty.
 - **Audio**: Procedural sound generation via `SoundManager` (Web Audio API).
 
 ## Development
@@ -42,4 +41,3 @@ This is a modern Tower Defense game built with React, TypeScript, and HTML5 Canv
 - Ensure `notifyState()` is called in the Engine when game data changes that the UI needs to reflect.
 - Keep the "Flat Neon" aesthetic. Avoid realistic textures.
 - Maintain object pooling pattern for new projectile/particle types.
-- **Input Handling**: Ensure new controls work for both Touch and Mouse via Pointer Events.

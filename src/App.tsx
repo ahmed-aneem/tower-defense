@@ -3,7 +3,7 @@ import { GameEngine, type GameState } from './game/GameEngine';
 import { HUD } from './components/HUD';
 import { type TowerType } from './game/Constants';
 import { Tower } from './game/Tower';
-import { Vector2 } from './game/Vector';
+import { MAPS, type MapConfig } from './game/Maps';
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -15,68 +15,51 @@ function App() {
     isGameOver: false,
     gameStarted: false,
     waveActive: false,
-    isPaused: false
+    isPaused: false,
+    activeMods: [],
+    choosingMod: false,
+    modOptions: []
   });
-
-  // Drag State
-  const [dragState, setDragState] = useState<{ active: boolean; type: TowerType | null }>({ active: false, type: null });
+  const [selectedTowerType, setSelectedTowerType] = useState<TowerType | null>(null);
   const [selectedTower, setSelectedTower] = useState<Tower | null>(null);
+  const [selectedMap, setSelectedMap] = useState<MapConfig>(MAPS[0]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Initialize Engine
-    const engine = new GameEngine(canvasRef.current, (newState) => {
+    // Cleanup previous engine if exists
+    if (engineRef.current) {
+        engineRef.current.destroy();
+    }
+
+    // Initialize Engine with selected map
+    const engine = new GameEngine(canvasRef.current, selectedMap.waypoints, (newState) => {
       setGameState(newState);
     });
     engineRef.current = engine;
 
     return () => {
-      // Cleanup if needed
+      if (engineRef.current) {
+          engineRef.current.destroy();
+      }
     };
-  }, []);
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-      if (dragState.active && engineRef.current && canvasRef.current) {
-          const rect = canvasRef.current.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          const pos = new Vector2(x, y);
-          engineRef.current.setPreview(pos, dragState.type);
-      }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-      if (dragState.active) {
-          if (engineRef.current && canvasRef.current) {
-               const rect = canvasRef.current.getBoundingClientRect();
-               const x = e.clientX - rect.left;
-               const y = e.clientY - rect.top;
-               const pos = new Vector2(x, y);
-
-               // Attempt placement
-               if (dragState.type) {
-                   engineRef.current.placeTower(pos, dragState.type);
-               }
-
-               // Reset Engine Preview
-               engineRef.current.setPreview(null, null);
-          }
-          setDragState({ active: false, type: null });
-      }
-  };
+  }, [selectedMap]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    // Only handle selection clicks if we weren't dragging
-    if (!dragState.active && engineRef.current && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const pos = new Vector2(x, y);
+    if (!engineRef.current || !canvasRef.current) return;
 
-        const clickedTower = engineRef.current.getTowerAt(pos);
-        if (clickedTower) {
-            setSelectedTower(clickedTower);
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const clickedTower = engineRef.current.handleClick(x, y, selectedTowerType);
+
+    if (clickedTower) {
+        setSelectedTower(clickedTower);
+        setSelectedTowerType(null);
+    } else {
+        if (selectedTowerType) {
+             // Keep tool selected? For now, yes.
         } else {
             setSelectedTower(null);
         }
@@ -91,29 +74,27 @@ function App() {
   }
 
   return (
-    <div
-        className="w-full h-screen bg-gray-950 flex items-center justify-center overflow-hidden touch-none"
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-    >
-      <div className="relative shadow-2xl rounded-xl overflow-hidden border border-gray-800 touch-none select-none">
+    <div className="w-full h-screen bg-gray-950 flex items-center justify-center overflow-hidden">
+      <div className="relative shadow-2xl rounded-xl overflow-hidden border border-gray-800">
         <canvas
           ref={canvasRef}
-          className="cursor-crosshair block touch-none"
+          className="cursor-crosshair block"
           onClick={handleCanvasClick}
         />
 
         <HUD
           gameState={gameState}
           engine={engineRef}
-          selectedTowerType={null}
-          onStartDrag={(type) => {
-              setDragState({ active: true, type });
+          selectedTowerType={selectedTowerType}
+          onSelectTower={(type) => {
+              setSelectedTowerType(type);
+              setSelectedTower(null);
           }}
           selectedTower={selectedTower}
           onSellTower={handleSell}
           onDeselect={() => setSelectedTower(null)}
+          selectedMap={selectedMap}
+          onSelectMap={setSelectedMap}
         />
       </div>
     </div>

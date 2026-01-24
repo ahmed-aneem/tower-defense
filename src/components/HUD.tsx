@@ -1,28 +1,33 @@
 import React, { useState } from 'react';
-import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair } from 'lucide-react';
+import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair, Map as MapIcon, Cpu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { type GameState, GameEngine } from '../game/GameEngine';
 import { TOWERS, type TowerType, TowerTargetingMode } from '../game/Constants';
 import { Tower } from '../game/Tower';
 import { soundManager } from '../game/SoundManager';
+import { MAPS, type MapConfig } from '../game/Maps';
 
 interface HUDProps {
   gameState: GameState;
   engine: React.MutableRefObject<GameEngine | null> | null;
   selectedTowerType: TowerType | null;
-  onStartDrag: (type: TowerType) => void;
+  onSelectTower: (type: TowerType | null) => void;
   selectedTower: Tower | null;
   onSellTower: () => void;
   onDeselect: () => void;
+  selectedMap: MapConfig;
+  onSelectMap: (map: MapConfig) => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
   gameState,
   engine,
   selectedTowerType,
-  onStartDrag,
+  onSelectTower,
   selectedTower,
   onSellTower,
-  onDeselect
+  onDeselect,
+  selectedMap,
+  onSelectMap
 }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [, forceUpdate] = useState(0);
@@ -39,6 +44,18 @@ export const HUD: React.FC<HUDProps> = ({
       const nextIndex = (currentIndex + 1) % modes.length;
       selectedTower.setTargetingMode(modes[nextIndex]);
       forceUpdate(n => n + 1);
+  };
+
+  const nextMap = () => {
+      const idx = MAPS.findIndex(m => m.id === selectedMap.id);
+      const next = MAPS[(idx + 1) % MAPS.length];
+      onSelectMap(next);
+  };
+
+  const prevMap = () => {
+      const idx = MAPS.findIndex(m => m.id === selectedMap.id);
+      const prev = MAPS[(idx - 1 + MAPS.length) % MAPS.length];
+      onSelectMap(prev);
   };
 
   return (
@@ -60,6 +77,17 @@ export const HUD: React.FC<HUDProps> = ({
             <Activity size={18} className="text-cyan-400" />
             <span className="font-bold text-lg sm:text-xl text-cyan-200 tabular-nums">WAVE {gameState.wave}</span>
           </div>
+
+          {/* Active Mods Icons */}
+          {gameState.activeMods.length > 0 && (
+              <div className="flex items-center gap-1 pl-2 border-l border-slate-700/50">
+                  {gameState.activeMods.map((mod, i) => (
+                      <div key={i} className="w-6 h-6 bg-slate-800 rounded flex items-center justify-center text-[10px] text-white border border-slate-600" title={mod.name + ": " + mod.description}>
+                          <Cpu size={14} className={mod.rarity === 'LEGENDARY' ? 'text-amber-400' : mod.rarity === 'RARE' ? 'text-cyan-400' : 'text-slate-400'} />
+                      </div>
+                  ))}
+              </div>
+          )}
         </div>
 
         {/* Controls */}
@@ -82,7 +110,7 @@ export const HUD: React.FC<HUDProps> = ({
       </div>
 
       {/* Wave Control (Floating) */}
-      {!gameState.waveActive && gameState.gameStarted && !gameState.isGameOver && !gameState.isPaused && (
+      {!gameState.waveActive && gameState.gameStarted && !gameState.isGameOver && !gameState.isPaused && !gameState.choosingMod && (
           <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-auto">
              <button
                 onClick={() => engine?.current?.startWave()}
@@ -95,7 +123,7 @@ export const HUD: React.FC<HUDProps> = ({
       )}
 
       {/* Center: Selected Tower Info */}
-      {selectedTower && !gameState.isGameOver && (
+      {selectedTower && !gameState.isGameOver && !gameState.choosingMod && (
          <div className="pointer-events-auto self-center bg-slate-900/95 p-5 rounded-2xl border border-slate-600/50 text-white w-72 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
              <div className="flex justify-between items-center mb-4 border-b border-slate-700/50 pb-2">
                  <div className="flex items-center gap-3">
@@ -172,7 +200,7 @@ export const HUD: React.FC<HUDProps> = ({
       )}
 
       {/* Special Abilities */}
-      {gameState.gameStarted && !gameState.isGameOver && (
+      {gameState.gameStarted && !gameState.isGameOver && !gameState.choosingMod && (
           <div className="absolute bottom-32 right-4 pointer-events-auto z-20">
               <button
                   onClick={() => engine?.current?.activateAbility('ORBITAL_STRIKE')}
@@ -197,14 +225,10 @@ export const HUD: React.FC<HUDProps> = ({
             return (
               <button
                 key={key}
-                onPointerDown={() => {
-                  if (canAfford) {
-                    onStartDrag(key as TowerType);
-                  }
-                }}
+                onClick={() => onSelectTower(isSelected ? null : key as TowerType)}
                 disabled={!canAfford}
                 className={`
-                  relative group flex flex-col items-center p-2 sm:p-3 rounded-xl border transition-all duration-200 min-w-[70px] sm:min-w-[90px] cursor-grab active:cursor-grabbing
+                  relative group flex flex-col items-center p-2 sm:p-3 rounded-xl border transition-all duration-200 min-w-[70px] sm:min-w-[90px]
                   ${isSelected
                     ? 'bg-slate-800 border-blue-400 ring-2 ring-blue-500/50 -translate-y-2 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.5)]'
                     : 'bg-slate-900/80 border-slate-700 hover:border-slate-500 hover:bg-slate-800'}
@@ -255,22 +279,42 @@ export const HUD: React.FC<HUDProps> = ({
       {/* Start Game Overlay */}
       {!gameState.gameStarted && !gameState.isGameOver && (
         <div className="absolute inset-0 bg-slate-950/90 flex items-center justify-center z-50 pointer-events-auto backdrop-blur-sm">
-          <div className="bg-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-700/50 text-center max-w-lg shadow-[0_0_50px_rgba(59,130,246,0.15)] relative overflow-hidden">
+          <div className="bg-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-700/50 text-center max-w-lg shadow-[0_0_50px_rgba(59,130,246,0.15)] relative overflow-hidden w-full mx-4">
             {/* Background decoration */}
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
 
             <h1 className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-400 mb-4 tracking-tight filter drop-shadow-lg">
               NEON DEFENSE
             </h1>
-            <p className="text-slate-400 mb-10 text-lg leading-relaxed">
+            <p className="text-slate-400 mb-8 text-lg leading-relaxed">
               Strategic tower defense in a cyberpunk grid.
               <br/>Protect the core at all costs.
             </p>
 
+            {/* Map Selection */}
+            <div className="mb-10 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                <div className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Target Sector</div>
+                <div className="flex items-center justify-between gap-4">
+                    <button onClick={prevMap} className="p-2 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white">
+                        <ChevronLeft size={24} />
+                    </button>
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-2 text-xl font-bold text-white">
+                            <MapIcon size={20} className="text-blue-400" />
+                            {selectedMap.name}
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">{selectedMap.description}</div>
+                    </div>
+                    <button onClick={nextMap} className="p-2 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white">
+                        <ChevronRight size={24} />
+                    </button>
+                </div>
+            </div>
+
             <button
               onClick={() => {
                   engine?.current?.startGame();
-                  soundManager.playShoot('BASIC'); // Sound check
+                  soundManager.playShoot('BASIC');
               }}
               className="group relative w-full bg-blue-600 hover:bg-blue-500 text-white text-xl font-bold py-5 rounded-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(37,99,235,0.4)] overflow-hidden"
             >
@@ -282,8 +326,60 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       )}
 
+      {/* Mod Selection Overlay */}
+      {gameState.choosingMod && (
+          <div className="absolute inset-0 bg-slate-950/80 flex items-center justify-center z-50 pointer-events-auto backdrop-blur-md">
+            <div className="max-w-4xl w-full px-4">
+                <div className="text-center mb-8">
+                     <h2 className="text-3xl font-bold text-white mb-2">SYSTEM UPGRADE AVAILABLE</h2>
+                     <p className="text-slate-400">Choose a modification to enhance your defenses.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {gameState.modOptions?.map((mod, i) => (
+                        <button
+                            key={i}
+                            onClick={() => engine?.current?.selectMod(mod)}
+                            className={`
+                                relative group overflow-hidden bg-slate-900 border-2 p-6 rounded-2xl transition-all hover:scale-105 text-left flex flex-col h-64 shadow-2xl
+                                ${mod.rarity === 'LEGENDARY' ? 'border-amber-500/50 hover:border-amber-500 shadow-amber-500/10' :
+                                  mod.rarity === 'RARE' ? 'border-cyan-500/50 hover:border-cyan-500 shadow-cyan-500/10' :
+                                  'border-slate-600 hover:border-slate-400 shadow-blue-500/5'}
+                            `}
+                        >
+                            <div className={`
+                                absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity
+                                ${mod.rarity === 'LEGENDARY' ? 'bg-amber-500' : mod.rarity === 'RARE' ? 'bg-cyan-500' : 'bg-white'}
+                            `} />
+
+                            <div className="mb-4">
+                                <span className={`
+                                    text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded
+                                    ${mod.rarity === 'LEGENDARY' ? 'bg-amber-500/20 text-amber-400' :
+                                      mod.rarity === 'RARE' ? 'bg-cyan-500/20 text-cyan-400' :
+                                      'bg-slate-700 text-slate-300'}
+                                `}>
+                                    {mod.rarity}
+                                </span>
+                            </div>
+
+                            <Cpu size={32} className={`mb-4 ${mod.rarity === 'LEGENDARY' ? 'text-amber-400' : mod.rarity === 'RARE' ? 'text-cyan-400' : 'text-slate-200'}`} />
+
+                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-200 transition-colors">{mod.name}</h3>
+                            <p className="text-slate-400 text-sm leading-relaxed">{mod.description}</p>
+
+                            <div className="mt-auto pt-4 flex items-center gap-2 text-xs font-mono opacity-50">
+                                <span>ID: {mod.id.split('_')[0]}</span>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+          </div>
+      )}
+
       {/* Paused Overlay */}
-      {gameState.isPaused && !gameState.isGameOver && (
+      {gameState.isPaused && !gameState.isGameOver && !gameState.choosingMod && (
           <div className="absolute inset-0 bg-slate-950/60 flex items-center justify-center z-40 pointer-events-auto backdrop-blur-sm">
             <div className="bg-slate-900/90 p-8 rounded-2xl border border-slate-700 text-center shadow-2xl">
                 <h2 className="text-3xl font-bold text-white mb-6 tracking-widest">SYSTEM PAUSED</h2>
