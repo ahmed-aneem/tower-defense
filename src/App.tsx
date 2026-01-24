@@ -17,7 +17,8 @@ function App() {
     waveActive: false,
     isPaused: false,
     activeMods: [],
-    choosingMod: false
+    choosingMod: false,
+    modOptions: []
   });
   const [selectedTowerType, setSelectedTowerType] = useState<TowerType | null>(null);
   const [selectedTower, setSelectedTower] = useState<Tower | null>(null);

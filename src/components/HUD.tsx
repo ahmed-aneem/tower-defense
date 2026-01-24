@@ -5,7 +5,6 @@ import { TOWERS, type TowerType, TowerTargetingMode } from '../game/Constants';
 import { Tower } from '../game/Tower';
 import { soundManager } from '../game/SoundManager';
 import { MAPS, type MapConfig } from '../game/Maps';
-import { type Mod } from '../game/Mods';
 
 interface HUDProps {
   gameState: GameState;

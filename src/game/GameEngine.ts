@@ -184,7 +184,7 @@ export class GameEngine {
   }
 
   placeTower(pos: Vector2, type: TowerType): boolean {
-    let cost = TOWERS[type].cost;
+    let cost: number = TOWERS[type].cost;
     // Apply Discount Mod
     if (this.hasMod('DISCOUNT')) {
         cost = Math.floor(cost * 0.9);
@@ -229,7 +229,7 @@ export class GameEngine {
   }
 
   sellTower(tower: Tower) {
-      let cost = TOWERS[tower.type].cost;
+      let cost: number = TOWERS[tower.type].cost;
        // Discount mod means we spent less, so we should probably refund based on spent?
        // But simplified: refund 50% of base cost.
        // If we want to be nice, 50% of current cost.

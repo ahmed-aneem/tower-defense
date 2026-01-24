@@ -1,5 +1,3 @@
-import { Vector2 } from './Vector';
-
 export const CELL_SIZE = 40;
 export const GAME_WIDTH = 1200; // Increased size for "mapa maior"
 export const GAME_HEIGHT = 800;
