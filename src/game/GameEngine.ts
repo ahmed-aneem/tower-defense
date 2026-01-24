@@ -4,10 +4,12 @@ import { Projectile } from './Projectile';
 import { Particle } from './Particle';
 import { ObjectPool } from './ObjectPool';
 import { Vector2 } from './Vector';
-import { GAME_WIDTH, GAME_HEIGHT, TOWERS, type TowerType, DamageType, DefenseType } from './Constants';
+import { GAME_WIDTH, GAME_HEIGHT, PATH_WAYPOINTS, TOWERS, type TowerType, DamageType, DefenseType } from './Constants';
 import { type EnemyType } from '../types';
 import { soundManager } from './SoundManager';
 import { type Mod, MODS } from './Mods';
+import { WaveManager, type SpawnInstruction } from './WaveManager';
+import { DamageSystem } from './DamageSystem';
 
 export interface GameState {
   money: number;
@@ -33,6 +35,11 @@ export class GameEngine {
 
   projectilePool: ObjectPool<Projectile>;
   particlePool: ObjectPool<Particle>;
+  waveManager: WaveManager;
+
+  // Placement Preview
+  previewPos: Vector2 | null = null;
+  previewType: TowerType | null = null;
 
   state: GameState = {
     money: 300,
@@ -54,7 +61,7 @@ export class GameEngine {
   private lastModWave: number = 0;
   // private lastTime: number = 0;
   private spawnTimer: number = 0;
-  private enemiesToSpawn: EnemyType[] = [];
+  private spawnQueue: SpawnInstruction[] = [];
   private onStateChange: (state: GameState) => void;
 
   // Screen shake
@@ -65,6 +72,7 @@ export class GameEngine {
     this.ctx = canvas.getContext('2d')!;
     this.onStateChange = onStateChange;
     this.path = mapPath;
+    this.waveManager = new WaveManager();
 
     // Init Pools
     this.projectilePool = new ObjectPool<Projectile>(
@@ -120,7 +128,7 @@ export class GameEngine {
     }
 
     this.state.waveActive = true;
-    this.enemiesToSpawn = this.generateWave(this.state.wave);
+    this.spawnQueue = this.waveManager.getWave(this.state.wave);
     this.spawnTimer = 0;
     this.notifyState();
   }
@@ -191,6 +199,18 @@ export class GameEngine {
     }
 
     if (this.state.money >= cost) {
+  setPreview(pos: Vector2 | null, type: TowerType | null) {
+      this.previewPos = pos;
+      this.previewType = type;
+  }
+
+  canPlaceTower(pos: Vector2): boolean {
+      // Check Bounds (keep tower fully inside)
+      const margin = 20;
+      if (pos.x < margin || pos.x > this.canvas.width - margin || pos.y < margin || pos.y > this.canvas.height - margin) {
+          return false;
+      }
+
       // Check collision with other towers
       for (const t of this.towers) {
         if (pos.distanceTo(t.position) < 40) return false;
@@ -200,10 +220,18 @@ export class GameEngine {
       for (let i=0; i<this.path.length-1; i++) {
            const p1 = this.path[i];
            const p2 = this.path[i+1];
+      for (let i=0; i<PATH_WAYPOINTS.length-1; i++) {
+           const p1 = PATH_WAYPOINTS[i];
+           const p2 = PATH_WAYPOINTS[i+1];
            const dist = this.pointToSegmentDistance(pos, p1, p2);
            if (dist < 30) return false;
       }
+      return true;
+  }
 
+  placeTower(pos: Vector2, type: TowerType): boolean {
+    const cost = TOWERS[type].cost;
+    if (this.state.money >= cost && this.canPlaceTower(pos)) {
       this.state.money -= cost;
       const newTower = new Tower(pos, type);
 
@@ -326,7 +354,7 @@ export class GameEngine {
   private update() {
     // Spawning
     if (this.state.waveActive) {
-      if (this.enemiesToSpawn.length > 0) {
+      if (this.spawnQueue.length > 0) {
         this.spawnTimer++;
         if (this.spawnTimer > 60) {
           const type = this.enemiesToSpawn.shift()!;
@@ -334,6 +362,11 @@ export class GameEngine {
           const enemy = new Enemy(type);
           enemy.setPath(this.path); // Enemy needs to know path!
           this.enemies.push(enemy);
+        const nextInterval = this.spawnQueue[0].interval;
+
+        if (this.spawnTimer >= nextInterval) {
+          const instruction = this.spawnQueue.shift()!;
+          this.enemies.push(new Enemy(instruction.type));
           this.spawnTimer = 0;
         }
       } else if (this.enemies.length === 0) {
@@ -413,11 +446,14 @@ export class GameEngine {
             p.hitList.add(e.id);
             const finalDamage = this.calculateDamage(p.damage, p.damageType, e.defenseType);
 
+            // Calculate Damage
+            const finalDamage = DamageSystem.calculateDamage(p.damage, p.damageType, e.defenseType);
+
             if (p.isSplash) {
                 this.enemies.forEach(nearby => {
                     if (nearby.isDead) return;
                     if (nearby.position.distanceTo(p.position) <= p.splashRadius) {
-                         const splashDmg = this.calculateDamage(p.damage, p.damageType, nearby.defenseType);
+                         const splashDmg = DamageSystem.calculateDamage(p.damage, p.damageType, nearby.defenseType);
                          nearby.takeDamage(splashDmg);
                          if (splashDmg <= 0) this.createFloatingText(nearby.position, "IMMUNE", "#fff");
                     }
@@ -588,6 +624,29 @@ export class GameEngine {
             }
         }
     });
+
+    // Draw Placement Preview
+    if (this.previewPos && this.previewType) {
+        const canPlace = this.canPlaceTower(this.previewPos) && this.state.money >= TOWERS[this.previewType].cost;
+        const range = TOWERS[this.previewType].range;
+        const color = TOWERS[this.previewType].color;
+
+        this.ctx.beginPath();
+        this.ctx.arc(this.previewPos.x, this.previewPos.y, range, 0, Math.PI * 2);
+        this.ctx.fillStyle = canPlace ? 'rgba(255, 255, 255, 0.1)' : 'rgba(239, 68, 68, 0.2)';
+        this.ctx.fill();
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = canPlace ? 'rgba(255, 255, 255, 0.5)' : 'rgba(239, 68, 68, 0.8)';
+        this.ctx.setLineDash([5, 5]);
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+
+        // Draw Ghost Tower
+        this.ctx.fillStyle = color;
+        this.ctx.globalAlpha = 0.5;
+        this.ctx.fillRect(this.previewPos.x - 15, this.previewPos.y - 15, 30, 30);
+        this.ctx.globalAlpha = 1.0;
+    }
     this.enemies.forEach(e => e.draw(this.ctx));
 
     this.ctx.shadowBlur = 10;

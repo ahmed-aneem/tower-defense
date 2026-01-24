@@ -5,12 +5,14 @@ A strategic Tower Defense game built with React, TypeScript, and HTML5 Canvas.
 ## Features
 
 - **Strategic Gameplay**: Place towers to defend your core from waves of enemies.
+- **Mobile & Desktop**: Fully responsive drag-and-drop controls optimized for both touch and mouse.
 - **6 Tower Types**: Basic, Sniper, Minigun, Frost, Cannon, and Laser.
 - **Multiple Maps**: Choose from 3 distinct sectors (Serpent, Fortress, Crossing).
 - **Roguelite Mods**: Every 5 waves, choose a system upgrade to boost your defenses or economy.
 - **Advanced Mechanics**:
-  - **Damage Types**: Physical, Explosive, Energy.
-  - **Defense System**: Armored and Shielded enemies require specific counters.
+  - **Structured Wave System**: Carefully crafted rounds with scaling difficulty (inspired by BTD6).
+  - **Damage Types**: Physical, Explosive, Energy, Cold.
+  - **Defense System**: Armored (Heavy) and Shielded enemies require specific counters.
   - **Targeting Priorities**: Configure each tower to target First, Last, Strongest, Weakest, or Closest.
 - **Tower Upgrades**: Upgrade towers to increase damage, range, and fire rate (up to Level 3).
 - **Special Abilities**: Call down an **Orbital Strike** to decimate enemies.
@@ -24,7 +26,7 @@ A strategic Tower Defense game built with React, TypeScript, and HTML5 Canvas.
 - React 19
 - TypeScript
 - Vite
-- Tailwind CSS
+- Tailwind CSS v4
 - HTML5 Canvas API
 - Web Audio API
 
