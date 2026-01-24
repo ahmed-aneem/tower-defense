@@ -9,7 +9,7 @@ interface HUDProps {
   gameState: GameState;
   engine: React.MutableRefObject<GameEngine | null> | null;
   selectedTowerType: TowerType | null;
-  onSelectTower: (type: TowerType | null) => void;
+  onStartDrag: (type: TowerType) => void;
   selectedTower: Tower | null;
   onSellTower: () => void;
   onDeselect: () => void;
@@ -19,7 +19,7 @@ export const HUD: React.FC<HUDProps> = ({
   gameState,
   engine,
   selectedTowerType,
-  onSelectTower,
+  onStartDrag,
   selectedTower,
   onSellTower,
   onDeselect
@@ -197,10 +197,14 @@ export const HUD: React.FC<HUDProps> = ({
             return (
               <button
                 key={key}
-                onClick={() => onSelectTower(isSelected ? null : key as TowerType)}
+                onPointerDown={() => {
+                  if (canAfford) {
+                    onStartDrag(key as TowerType);
+                  }
+                }}
                 disabled={!canAfford}
                 className={`
-                  relative group flex flex-col items-center p-2 sm:p-3 rounded-xl border transition-all duration-200 min-w-[70px] sm:min-w-[90px]
+                  relative group flex flex-col items-center p-2 sm:p-3 rounded-xl border transition-all duration-200 min-w-[70px] sm:min-w-[90px] cursor-grab active:cursor-grabbing
                   ${isSelected
                     ? 'bg-slate-800 border-blue-400 ring-2 ring-blue-500/50 -translate-y-2 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.5)]'
                     : 'bg-slate-900/80 border-slate-700 hover:border-slate-500 hover:bg-slate-800'}
