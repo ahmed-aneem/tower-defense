@@ -104,7 +104,8 @@ export const ENEMIES = {
     reward: 10,
     color: '#EF4444', // Red
     radius: 12,
-    defenseType: DefenseType.NONE
+    defenseType: DefenseType.NONE,
+    children: [] as const
   },
   FAST: {
     hp: 30,
@@ -112,7 +113,8 @@ export const ENEMIES = {
     reward: 15,
     color: '#EC4899', // Pink
     radius: 10,
-    defenseType: DefenseType.NONE
+    defenseType: DefenseType.NONE,
+    children: ['SWARM'] as const
   },
   TANK: {
     hp: 200,
@@ -120,7 +122,8 @@ export const ENEMIES = {
     reward: 30,
     color: '#7F1D1D', // Dark Red
     radius: 16,
-    defenseType: DefenseType.HEAVY
+    defenseType: DefenseType.HEAVY,
+    children: ['ARMORED', 'ARMORED'] as const
   },
   SWARM: {
     hp: 15,
@@ -128,7 +131,8 @@ export const ENEMIES = {
     reward: 5,
     color: '#f97316', // Orange
     radius: 8,
-    defenseType: DefenseType.NONE
+    defenseType: DefenseType.NONE,
+    children: [] as const
   },
   ARMORED: {
     hp: 150,
@@ -136,7 +140,8 @@ export const ENEMIES = {
     reward: 25,
     color: '#57534e', // Stone
     radius: 14,
-    defenseType: DefenseType.HEAVY
+    defenseType: DefenseType.HEAVY,
+    children: ['NORMAL', 'NORMAL'] as const
   },
   BOSS: {
     hp: 1000,
@@ -144,7 +149,8 @@ export const ENEMIES = {
     reward: 200,
     color: '#4c1d95', // Violet
     radius: 25,
-    defenseType: DefenseType.SHIELDED
+    defenseType: DefenseType.SHIELDED,
+    children: ['TANK', 'TANK', 'FAST', 'FAST'] as const
   }
 } as const;
 

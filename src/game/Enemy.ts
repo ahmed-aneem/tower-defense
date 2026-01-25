@@ -20,8 +20,9 @@ export class Enemy implements IEnemy {
   waypointIndex: number = 0;
   private path: Vector2[] = [];
   private wobbleOffset: number = Math.random() * 100;
+  private hasStartPosition: boolean = false;
 
-  constructor(type: EnemyType) {
+  constructor(type: EnemyType, startPos?: Vector2, startWaypoint?: number) {
     this.type = type;
     this.id = Math.random().toString(36).substr(2, 9);
     const config = ENEMIES[type];
@@ -33,13 +34,24 @@ export class Enemy implements IEnemy {
     this.color = config.color;
     this.defenseType = config.defenseType;
 
-    // Start at 0,0 - setPath will correct this
-    this.position = new Vector2(0, 0);
+    if (startPos) {
+        this.position = startPos.clone();
+        this.hasStartPosition = true;
+        // Apply a small random offset to prevent perfect stacking
+        this.position.x += (Math.random() - 0.5) * 5;
+        this.position.y += (Math.random() - 0.5) * 5;
+    } else {
+        this.position = new Vector2(0, 0);
+    }
+
+    if (startWaypoint !== undefined) {
+        this.waypointIndex = startWaypoint;
+    }
   }
 
   setPath(path: Vector2[]) {
       this.path = path;
-      if (this.path.length > 0) {
+      if (this.path.length > 0 && !this.hasStartPosition) {
           this.position = this.path[0].clone();
       }
   }
