@@ -3,8 +3,9 @@ import { Tower } from './Tower';
 import { Projectile } from './Projectile';
 import { Particle } from './Particle';
 import { ObjectPool } from './ObjectPool';
+import { QuadTree } from './QuadTree';
 import { Vector2 } from './Vector';
-import { GAME_WIDTH, GAME_HEIGHT, TOWERS, type TowerType, DamageType, DefenseType } from './Constants';
+import { GAME_WIDTH, GAME_HEIGHT, TOWERS, type TowerType, DamageType, DefenseType, ENEMIES } from './Constants';
 import { type EnemyType } from '../types';
 import { soundManager } from './SoundManager';
 import { type Mod, MODS } from './Mods';
@@ -33,6 +34,7 @@ export class GameEngine {
 
   projectilePool: ObjectPool<Projectile>;
   particlePool: ObjectPool<Particle>;
+  quadTree: QuadTree;
 
   state: GameState = {
     money: 300,
@@ -50,6 +52,8 @@ export class GameEngine {
   path: Vector2[];
   modOptions: Mod[] = [];
   isRunning: boolean = true;
+  placementMode: TowerType | null = null;
+  mousePosition: Vector2 = new Vector2(0, 0);
 
   private lastModWave: number = 0;
   // private lastTime: number = 0;
@@ -76,6 +80,9 @@ export class GameEngine {
         () => new Particle(new Vector2(0,0), ''),
         (p, pos, col, speed, size, txt) => p.reset(pos, col, speed, size, txt)
     );
+
+    // Init QuadTree
+    this.quadTree = new QuadTree({ x: 0, y: 0, w: GAME_WIDTH, h: GAME_HEIGHT }, 4);
 
     // Set canvas size
     this.updateCanvasSize();
@@ -397,6 +404,14 @@ export class GameEngine {
     // Update Projectiles
     this.projectiles.forEach(p => p.update());
 
+    // Rebuild QuadTree
+    this.quadTree = new QuadTree({ x: 0, y: 0, w: GAME_WIDTH, h: GAME_HEIGHT }, 4);
+    this.enemies.forEach(e => {
+        if (!e.isDead && !e.reachedEnd) {
+            this.quadTree.insert(e);
+        }
+    });
+
     // Collision Detection (Projectile vs Enemy)
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
@@ -406,17 +421,29 @@ export class GameEngine {
         continue;
       }
 
-      for (const e of this.enemies) {
+      // Query QuadTree for potential collisions
+      // For direct hits, we check a small radius. For splash, we might still check direct hit first or just explode?
+      // Existing logic: "Projectile travels, hits FIRST enemy it touches".
+      // So we search for candidates near projectile.
+      const searchRadius = 30; // Max enemy radius + buffer
+      const candidates = this.quadTree.queryCircle(p.position, searchRadius);
+
+      for (const item of candidates) {
+        const e = item as Enemy;
         if (e.isDead || p.hitList.has(e.id)) continue;
 
-        if (p.position.distanceTo(e.position) < e.radius + 5) {
+        if (p.position.distanceTo(e.position) < e.radius + 5) { // 5 is projectile size buffer
             p.hitList.add(e.id);
             const finalDamage = this.calculateDamage(p.damage, p.damageType, e.defenseType);
 
             if (p.isSplash) {
-                this.enemies.forEach(nearby => {
+                // For splash, we query again for the splash radius
+                const splashCandidates = this.quadTree.queryCircle(p.position, p.splashRadius);
+                splashCandidates.forEach(splashItem => {
+                    const nearby = splashItem as Enemy;
                     if (nearby.isDead) return;
-                    if (nearby.position.distanceTo(p.position) <= p.splashRadius) {
+                    // Exact circle check
+                    if (nearby.position.distanceTo(p.position) <= p.splashRadius + nearby.radius) {
                          const splashDmg = this.calculateDamage(p.damage, p.damageType, nearby.defenseType);
                          nearby.takeDamage(splashDmg);
                          if (splashDmg <= 0) this.createFloatingText(nearby.position, "IMMUNE", "#fff");
@@ -472,6 +499,16 @@ export class GameEngine {
                  if (!nearby.isDead && nearby.id !== this.enemies[i].id && nearby.position.distanceTo(this.enemies[i].position) < 50) {
                      nearby.takeDamage(nearby.maxHp * 0.1);
                  }
+             });
+        }
+
+        // Spawn Children (Layered Spawning)
+        const enemyConfig = ENEMIES[this.enemies[i].type];
+        if (enemyConfig.children && enemyConfig.children.length > 0) {
+             enemyConfig.children.forEach(childType => {
+                 const child = new Enemy(childType, this.enemies[i].position, this.enemies[i].waypointIndex);
+                 child.setPath(this.path);
+                 this.enemies.push(child);
              });
         }
 
@@ -599,6 +636,35 @@ export class GameEngine {
 
     this.particles.forEach(p => p.draw(this.ctx));
 
+    // Draw Placement Ghost
+    if (this.placementMode) {
+        const tConf = TOWERS[this.placementMode];
+        this.ctx.save();
+        this.ctx.translate(this.mousePosition.x, this.mousePosition.y);
+
+        // Range
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, tConf.range, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 1;
+        this.ctx.setLineDash([5, 5]);
+        this.ctx.stroke();
+
+        // Body
+        this.ctx.fillStyle = tConf.color;
+        this.ctx.beginPath();
+        if (this.placementMode === 'SPLASH') {
+            this.ctx.rect(-10, -10, 20, 20);
+        } else {
+            this.ctx.arc(0, 0, 10, 0, Math.PI*2);
+        }
+        this.ctx.fill();
+
+        this.ctx.restore();
+    }
+
     this.ctx.restore();
   }
 
@@ -626,15 +692,32 @@ export class GameEngine {
       this.onStateChange({ ...this.state });
   }
 
-  handleClick(x: number, y: number, selectedTowerType: TowerType | null): Tower | null {
+  handleClick(x: number, y: number): Tower | null {
       const clickPos = new Vector2(x, y);
-
       const existingTower = this.getTowerAt(clickPos);
       if (existingTower) return existingTower;
-
-      if (selectedTowerType) {
-          this.placeTower(clickPos, selectedTowerType);
-      }
       return null;
+  }
+
+  setPlacementMode(type: TowerType | null) {
+      this.placementMode = type;
+  }
+
+  updateMouse(pos: Vector2) {
+      this.mousePosition = pos;
+  }
+
+  confirmPlacement(): boolean {
+      if (this.placementMode) {
+          if (this.placeTower(this.mousePosition, this.placementMode)) {
+              this.placementMode = null;
+              return true;
+          }
+      }
+      return false;
+  }
+
+  cancelPlacement() {
+      this.placementMode = null;
   }
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair, Map as MapIcon, Cpu, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair, Map as MapIcon, Cpu, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
 import { type GameState, GameEngine } from '../game/GameEngine';
 import { TOWERS, type TowerType, TowerTargetingMode } from '../game/Constants';
 import { Tower } from '../game/Tower';
@@ -16,6 +16,8 @@ interface HUDProps {
   onDeselect: () => void;
   selectedMap: MapConfig;
   onSelectMap: (map: MapConfig) => void;
+  onConfirmPlacement: () => void;
+  onCancelPlacement: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -27,7 +29,9 @@ export const HUD: React.FC<HUDProps> = ({
   onSellTower,
   onDeselect,
   selectedMap,
-  onSelectMap
+  onSelectMap,
+  onConfirmPlacement,
+  onCancelPlacement
 }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [, forceUpdate] = useState(0);
@@ -197,6 +201,24 @@ export const HUD: React.FC<HUDProps> = ({
                 )}
              </div>
          </div>
+      )}
+
+      {/* Placement Controls */}
+      {selectedTowerType && !gameState.isGameOver && (
+          <div className="absolute bottom-32 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-auto z-30">
+              <button
+                onClick={onCancelPlacement}
+                className="bg-slate-800/80 hover:bg-red-500 text-white p-4 rounded-full shadow-lg border-2 border-slate-600 hover:border-red-400 transition-all backdrop-blur-sm"
+              >
+                  <X size={28} />
+              </button>
+              <button
+                onClick={onConfirmPlacement}
+                className="bg-emerald-500 hover:bg-emerald-400 text-white p-4 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] border-2 border-emerald-300 transition-all hover:scale-110 active:scale-95"
+              >
+                  <Check size={32} />
+              </button>
+          </div>
       )}
 
       {/* Special Abilities */}
