@@ -2,6 +2,7 @@ import { Vector2 } from './Vector';
 import { type ITower } from '../types';
 import { TOWERS, type TowerType, DamageType, TowerTargetingMode } from './Constants';
 import { Enemy } from './Enemy';
+import { type StatusEffect } from './StatusEffects';
 
 export class Tower implements ITower {
   id: string;
@@ -19,6 +20,7 @@ export class Tower implements ITower {
   targetingMode: TowerTargetingMode = TowerTargetingMode.FIRST;
   damageType: DamageType;
   pierce: number;
+  statusEffect?: StatusEffect;
 
   // Visual recoil
   recoil: number = 0;
@@ -35,6 +37,8 @@ export class Tower implements ITower {
     this.color = config.color;
     this.damageType = config.damageType;
     this.pierce = config.pierce;
+    // @ts-ignore - Config has it, but Typescript inference might lag if not explicit in Constants types yet
+    this.statusEffect = config.statusEffect;
   }
 
   get upgradeCost(): number {
@@ -53,10 +57,16 @@ export class Tower implements ITower {
         this.damage = Math.ceil(this.damage * 1.5);
         this.range = Math.ceil(this.range * 1.2);
         this.pierce += 1;
+        if (this.statusEffect) {
+            this.statusEffect.strength *= 1.2; // Buff effect
+        }
     } else if (this.level === 3) {
         this.damage = Math.ceil(this.damage * 1.5);
         this.maxCooldown = Math.max(1, Math.floor(this.maxCooldown * 0.8));
         this.pierce += 2;
+        if (this.statusEffect) {
+            this.statusEffect.duration *= 1.5; // Longer duration
+        }
     }
 
     this.recoil = 10;
@@ -77,15 +87,21 @@ export class Tower implements ITower {
         if (this.recoil < 0.1) this.recoil = 0;
     }
 
-    // Optimization: Frost logic separate (AOE)
+    // Frost logic (AOE Pulse)
     if (this.type === 'FROST') {
         if (this.cooldownTimer <= 0) {
+             let hit = false;
              for (const e of enemies) {
                  if (!e.isDead && !e.reachedEnd && this.position.distanceTo(e.position) <= this.range) {
-                     e.freezeFactor = 0.5;
+                     if (this.statusEffect) {
+                         e.applyEffect(this.statusEffect);
+                         hit = true;
+                     }
                  }
              }
-             this.cooldownTimer = this.maxCooldown;
+             if (hit) {
+                 this.cooldownTimer = this.maxCooldown;
+             }
         }
         return null;
     }
@@ -123,19 +139,7 @@ export class Tower implements ITower {
                 if (metric < bestMetric) { bestMetric = metric; target = e; }
                 break;
         }
-
-        // Initial set if first valid candidate (and using First/Strongest which start at -Infinity needs care, but logic above handles it mostly)
-        // Wait, if bestMetric is -Infinity, ANY metric > -Infinity wins.
-        // If bestMetric is Infinity, ANY metric < Infinity wins.
-        // Logic above is: if (metric > bestMetric) -> update.
-        // For Closest (Infinity), if (metric < bestMetric) -> update. Correct.
     }
-
-    // If no target found yet but candidates exist, pick first?
-    // The loop above picks the BEST. If none met condition (all out of range), target is null.
-    // However, for FIRST/STRONGEST, init is -Infinity.
-    // If e.waypointIndex is 0, 0 > -Infinity. True.
-    // Correct.
 
     if (target) {
       this.targetId = (target as Enemy).id;
@@ -150,8 +154,20 @@ export class Tower implements ITower {
     // Return target if ready to shoot
     if (this.cooldownTimer <= 0 && target) {
       if (this.type === 'LASER') {
-           // Continuous damage
+           // Continuous damage handled by GameEngine usually, but let's check.
+           // GameEngine calls t.update(). If returns target, GameEngine does:
+           // if (t.type === 'LASER') { sound... } else { spawn projectile }
+           // Wait, GameEngine DOES NOT do damage for Laser?
+           // I recall reading: (target as Enemy).takeDamage(this.damage); inside Tower.update() for Laser.
+           // Let's verify.
+           // Yes, in my previous read of Tower.ts, it had logic for Laser inside.
+
            (target as Enemy).takeDamage(this.damage);
+           // Apply Burn for Laser
+           if (this.statusEffect) {
+               (target as Enemy).applyEffect(this.statusEffect);
+           }
+
            return target;
       }
 

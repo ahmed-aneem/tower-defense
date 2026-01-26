@@ -22,6 +22,7 @@ This is a modern Tower Defense game built with React, TypeScript, and HTML5 Canv
 - **Mods**: System upgrades (Damage, Range, Economy, etc.) offered periodically.
 - **Mechanics**:
     - **Damage Types**: Physical, Explosive, Energy, Cold.
+    - **Status Effects**: Robust system (`src/game/StatusEffects.ts`) for SLOW, BURN, STUN, WEAKEN.
     - **Resistances**: Enemies can be Heavy (Armored) or Shielded.
     - **Pierce**: Projectiles can hit multiple enemies.
 - **Abilities**: "Orbital Strike" (Nuke) ability to clear enemies.

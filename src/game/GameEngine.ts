@@ -73,12 +73,12 @@ export class GameEngine {
     // Init Pools
     this.projectilePool = new ObjectPool<Projectile>(
         () => new Projectile(new Vector2(0,0), new Vector2(0,0), 0, ''),
-        (p, start, target, dmg, col, type, pierce, splash, rad) => p.reset(start, target, dmg, col, type, pierce, splash, rad)
+        (p, start, target, dmg, col, type, pierce, splash, rad, effect) => p.reset(start, target, dmg, col, type, pierce, splash, rad, effect)
     );
 
     this.particlePool = new ObjectPool<Particle>(
         () => new Particle(new Vector2(0,0), ''),
-        (p, pos, col, speed, size, txt) => p.reset(pos, col, speed, size, txt)
+        (p, pos, col, speed, size, txt, shape) => p.reset(pos, col, speed, size, txt, shape)
     );
 
     // Init QuadTree
@@ -394,7 +394,8 @@ export class GameEngine {
                 color = '#FFF'; // White flash for crit
             }
 
-            this.projectiles.push(this.projectilePool.get(t.position, target.position, damage, color, t.damageType, t.pierce, isSplash, splashRadius));
+            const effect = t.statusEffect ? { ...t.statusEffect, sourceId: t.id } : undefined;
+            this.projectiles.push(this.projectilePool.get(t.position, target.position, damage, color, t.damageType, t.pierce, isSplash, splashRadius, effect));
             soundManager.playShoot(t.type);
             this.createExplosion(t.position, t.color, 3, 0.5);
           }
@@ -446,6 +447,7 @@ export class GameEngine {
                     if (nearby.position.distanceTo(p.position) <= p.splashRadius + nearby.radius) {
                          const splashDmg = this.calculateDamage(p.damage, p.damageType, nearby.defenseType);
                          nearby.takeDamage(splashDmg);
+                         if (p.statusEffect) nearby.applyEffect(p.statusEffect);
                          if (splashDmg <= 0) this.createFloatingText(nearby.position, "IMMUNE", "#fff");
                     }
                 });
@@ -454,6 +456,8 @@ export class GameEngine {
                 p.active = false;
             } else {
                 e.takeDamage(finalDamage);
+                if (p.statusEffect) e.applyEffect(p.statusEffect);
+
                 if (finalDamage <= 0) {
                     this.createFloatingText(e.position, "IMMUNE", "#fff");
                 } else {
@@ -550,7 +554,10 @@ export class GameEngine {
 
   private createExplosion(pos: Vector2, color: string, count: number, scale: number = 1) {
     for (let i = 0; i < count; i++) {
-      this.particles.push(this.particlePool.get(pos, color, scale, scale));
+      const shape = Math.random() > 0.5 ? 'SQUARE' : 'CIRCLE';
+      // Occasional star for big explosions
+      const finalShape = (scale > 1.5 && Math.random() > 0.7) ? 'STAR' : shape;
+      this.particles.push(this.particlePool.get(pos, color, scale, scale, undefined, finalShape));
     }
   }
 

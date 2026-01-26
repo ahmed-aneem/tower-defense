@@ -17,11 +17,11 @@ export interface IEnemy extends GameEntity {
   isDead: boolean;
   reachedEnd: boolean;
   reward: number;
-  freezeFactor: number; // 1 = normal, 0 = stopped
   defenseType: DefenseType;
 }
 
 import { type Enemy } from './game/Enemy';
+import { type StatusEffect } from './game/StatusEffects';
 
 export interface ITower extends GameEntity {
   type: TowerType;
@@ -34,6 +34,7 @@ export interface ITower extends GameEntity {
   targetingMode: TowerTargetingMode;
   damageType: DamageType;
   pierce: number;
+  statusEffect?: StatusEffect;
   upgrade(): void;
   update(enemies?: Enemy[]): Enemy | null;
 }
@@ -49,6 +50,7 @@ export interface IProjectile extends GameEntity {
   pierce: number;
   damageType: DamageType;
   hitList: Set<string>;
+  statusEffect?: StatusEffect;
 }
 
 export interface IParticle extends GameEntity {
@@ -58,4 +60,5 @@ export interface IParticle extends GameEntity {
   color: string;
   size: number;
   text?: string;
+  shape?: 'CIRCLE' | 'SQUARE' | 'STAR';
 }

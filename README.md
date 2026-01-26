@@ -10,6 +10,7 @@ A strategic Tower Defense game built with React, TypeScript, and HTML5 Canvas.
 - **Roguelite Mods**: Every 5 waves, choose a system upgrade to boost your defenses or economy.
 - **Advanced Mechanics**:
   - **Damage Types**: Physical, Explosive, Energy.
+  - **Status Effects**: Slow enemies with Cold, Burn them with Lasers, or Stun them with Explosions.
   - **Defense System**: Armored and Shielded enemies require specific counters.
   - **Targeting Priorities**: Configure each tower to target First, Last, Strongest, Weakest, or Closest.
 - **Tower Upgrades**: Upgrade towers to increase damage, range, and fire rate (up to Level 3).

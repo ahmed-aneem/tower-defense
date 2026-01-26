@@ -2,6 +2,8 @@ export const CELL_SIZE = 40;
 export const GAME_WIDTH = 1200; // Increased size for "mapa maior"
 export const GAME_HEIGHT = 800;
 
+import { StatusEffectType } from './StatusEffects';
+
 export const DamageType = {
   PHYSICAL: 'PHYSICAL',
   EXPLOSIVE: 'EXPLOSIVE',
@@ -69,7 +71,8 @@ export const TOWERS = {
     color: '#06b6d4', // Cyan
     type: 'FROST',
     damageType: DamageType.COLD,
-    pierce: 999
+    pierce: 999,
+    statusEffect: { type: StatusEffectType.SLOW, duration: 60, strength: 0.5 }
   },
   SPLASH: {
     name: 'Cannon',
@@ -91,7 +94,8 @@ export const TOWERS = {
     color: '#d946ef', // Fuchsia
     type: 'LASER',
     damageType: DamageType.ENERGY,
-    pierce: 5
+    pierce: 5,
+    statusEffect: { type: StatusEffectType.BURN, duration: 60, strength: 1, tickInterval: 20 }
   }
 } as const;
 
