@@ -1,6 +1,7 @@
 import { Vector2 } from './Vector';
 import { type IProjectile } from '../types';
 import { DamageType } from './Constants';
+import { type StatusEffect } from './StatusEffects';
 
 export class Projectile implements IProjectile {
   id: string;
@@ -16,6 +17,7 @@ export class Projectile implements IProjectile {
   pierce: number = 1;
   damageType: DamageType = DamageType.PHYSICAL;
   hitList: Set<string> = new Set();
+  statusEffect?: StatusEffect;
 
   constructor(
       startPos: Vector2,
@@ -25,7 +27,8 @@ export class Projectile implements IProjectile {
       damageType: DamageType = DamageType.PHYSICAL,
       pierce: number = 1,
       isSplash: boolean = false,
-      splashRadius: number = 0
+      splashRadius: number = 0,
+      statusEffect?: StatusEffect
   ) {
     this.id = Math.random().toString(36).substr(2, 9);
     this.position = startPos.clone();
@@ -37,6 +40,7 @@ export class Projectile implements IProjectile {
     this.targetId = null;
     this.isSplash = isSplash;
     this.splashRadius = splashRadius;
+    this.statusEffect = statusEffect;
 
     // If real positions provided, init velocity
     if (targetPos) {
@@ -53,7 +57,8 @@ export class Projectile implements IProjectile {
       damageType: DamageType,
       pierce: number,
       isSplash: boolean = false,
-      splashRadius: number = 0
+      splashRadius: number = 0,
+      statusEffect?: StatusEffect
   ) {
     this.active = true;
     this.position = startPos.clone();
@@ -63,6 +68,7 @@ export class Projectile implements IProjectile {
     this.pierce = pierce;
     this.isSplash = isSplash;
     this.splashRadius = splashRadius;
+    this.statusEffect = statusEffect;
     this.targetId = null;
     this.hitList.clear();
 

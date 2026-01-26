@@ -1,6 +1,7 @@
 import { Vector2 } from './Vector';
 import { type IEnemy, type EnemyType } from '../types';
 import { ENEMIES, DefenseType } from './Constants';
+import { type StatusEffect, StatusEffectType } from './StatusEffects';
 
 export class Enemy implements IEnemy {
   id: string;
@@ -11,7 +12,7 @@ export class Enemy implements IEnemy {
   isDead: boolean = false;
   reachedEnd: boolean = false;
   reward: number;
-  freezeFactor: number = 1;
+  effects: Map<string, StatusEffect> = new Map();
   radius: number;
   color: string;
   type: EnemyType;
@@ -56,16 +57,77 @@ export class Enemy implements IEnemy {
       }
   }
 
+  applyEffect(effect: StatusEffect) {
+      // Check if we already have this effect type from this source
+      // Actually, for simplicity, let's just key by effect Type.
+      // If we want multiple stacks from different sources, we key by type + source.
+      // But for now, ONE effect of each type. Stacks just refresh duration/strength if stronger.
+
+      const existing = this.effects.get(effect.type);
+      if (existing) {
+          // If new effect is stronger or same strength, apply it (refresh duration)
+          // If weaker, ignore? Or just refresh duration?
+          // BTD6: Stronger slow overrides.
+          if (effect.strength >= existing.strength) {
+              this.effects.set(effect.type, { ...effect });
+          } else {
+             // If weaker but new, maybe ignore? Or let's just keep the stronger one.
+          }
+      } else {
+          this.effects.set(effect.type, { ...effect });
+      }
+  }
+
+  updateEffects() {
+      // Process effects
+      for (const [key, effect] of this.effects.entries()) {
+          effect.duration--;
+
+          if (effect.type === StatusEffectType.BURN) {
+              if (effect.tickTimer !== undefined && effect.tickInterval) {
+                  effect.tickTimer--;
+                  if (effect.tickTimer <= 0) {
+                      this.takeDamage(effect.strength);
+                      effect.tickTimer = effect.tickInterval;
+                  }
+              } else {
+                  // Init timer if missing
+                  effect.tickTimer = effect.tickInterval || 60;
+              }
+          }
+
+          if (effect.duration <= 0) {
+              this.effects.delete(key);
+          }
+      }
+  }
+
+  getSpeedMultiplier(): number {
+      let multiplier = 1;
+      const slow = this.effects.get(StatusEffectType.SLOW);
+      if (slow) {
+          // strength 0.5 = 50% slow. strength 0.6 = 60% slow.
+          // max clamp at 0.9 to prevent full stop from slow alone if we want
+          const slowAmount = Math.min(0.9, slow.strength);
+          multiplier *= (1 - slowAmount);
+      }
+      const stun = this.effects.get(StatusEffectType.STUN);
+      if (stun) {
+          multiplier = 0;
+      }
+      return multiplier;
+  }
+
   update() {
     if (this.isDead || this.reachedEnd || this.path.length === 0) return;
 
+    this.updateEffects();
     this.wobbleOffset += 0.1;
 
-    // Apply slow decay (return to normal speed)
-    if (this.freezeFactor < 1) {
-        this.freezeFactor += 0.005;
-        if (this.freezeFactor > 1) this.freezeFactor = 1;
-    }
+    const currentSpeed = this.speed * this.getSpeedMultiplier();
+
+    // If stunned/stopped, don't move
+    if (currentSpeed <= 0.01) return;
 
     const target = this.path[this.waypointIndex + 1];
     if (!target) {
@@ -77,11 +139,11 @@ export class Enemy implements IEnemy {
     const dist = direction.length();
 
     // Move towards target
-    if (dist < this.speed * this.freezeFactor) {
+    if (dist < currentSpeed) {
       this.position = target.clone();
       this.waypointIndex++;
     } else {
-      this.position = this.position.add(direction.normalize().scale(this.speed * this.freezeFactor));
+      this.position = this.position.add(direction.normalize().scale(currentSpeed));
     }
   }
 
@@ -126,9 +188,15 @@ export class Enemy implements IEnemy {
         ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
     }
 
-    // Draw Frozen effect
-    if (this.freezeFactor < 0.8) {
+    // Draw Status Effect Visuals
+    if (this.effects.has(StatusEffectType.SLOW)) {
         ctx.fillStyle = '#67e8f9'; // Cyan tint
+    }
+    if (this.effects.has(StatusEffectType.BURN)) {
+        ctx.fillStyle = '#f97316'; // Orange tint
+    }
+    if (this.effects.has(StatusEffectType.STUN)) {
+        ctx.fillStyle = '#facc15'; // Yellow tint
     }
 
     ctx.fill();
@@ -150,9 +218,26 @@ export class Enemy implements IEnemy {
     const hpColor = hpPct > 0.5 ? '#22c55e' : hpPct > 0.25 ? '#eab308' : '#ef4444';
     ctx.fillStyle = hpColor;
     ctx.fillRect(this.position.x - barWidth / 2, this.position.y - yOffset, barWidth * hpPct, barHeight);
+
+    // Draw Status Icons (Small dots above health bar)
+    let iconOffset = 0;
+    this.effects.forEach((_, type) => {
+        ctx.beginPath();
+        ctx.arc(this.position.x - barWidth/2 + iconOffset, this.position.y - yOffset - 4, 3, 0, Math.PI*2);
+        if (type === StatusEffectType.SLOW) ctx.fillStyle = '#06b6d4';
+        if (type === StatusEffectType.BURN) ctx.fillStyle = '#f97316';
+        if (type === StatusEffectType.STUN) ctx.fillStyle = '#eab308';
+        ctx.fill();
+        iconOffset += 8;
+    });
   }
 
   takeDamage(amount: number) {
+    // Check for Weaken effect
+    if (this.effects.has(StatusEffectType.WEAKEN)) {
+        amount = Math.ceil(amount * 1.5);
+    }
+
     this.hp -= amount;
     if (this.hp <= 0) {
       this.hp = 0;

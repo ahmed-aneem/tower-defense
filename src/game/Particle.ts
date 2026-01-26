@@ -11,19 +11,21 @@ export class Particle implements IParticle {
   size!: number;
   decay!: number;
   text?: string;
+  shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE';
 
-  constructor(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string) {
+  constructor(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string, shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE') {
     this.id = Math.random().toString(36).substr(2, 9);
     this.position = position.clone();
     this.color = color;
     this.velocity = new Vector2(0,0);
-    this.reset(position, color, speedMultiplier, sizeMultiplier, text);
+    this.reset(position, color, speedMultiplier, sizeMultiplier, text, shape);
   }
 
-  reset(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string) {
+  reset(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string, shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE') {
     this.position = position.clone();
     this.color = color;
     this.text = text;
+    this.shape = shape;
 
     if (this.text) {
         this.maxLife = 60;
@@ -31,6 +33,9 @@ export class Particle implements IParticle {
         this.size = 20 * sizeMultiplier;
         this.decay = 0.98;
         this.velocity = new Vector2(0, -1.5 * speedMultiplier); // Float up
+
+        // Add some random drift for text too
+        this.velocity.x += (Math.random() - 0.5) * 0.5;
     } else {
         this.maxLife = 30 + Math.random() * 30;
         this.life = this.maxLife;
@@ -75,8 +80,40 @@ export class Particle implements IParticle {
 
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.position.x, this.position.y, this.size * alpha, 0, Math.PI * 2); // Shrink as it dies
-        ctx.fill();
+
+        const s = this.size * alpha;
+
+        if (this.shape === 'SQUARE') {
+             ctx.save();
+             ctx.translate(this.position.x, this.position.y);
+             ctx.rotate(this.life * 0.1); // Spin
+             ctx.fillRect(-s, -s, s*2, s*2);
+             ctx.restore();
+        } else if (this.shape === 'STAR') {
+             // 5-pointed star
+             const spikes = 5;
+             const outer = s * 1.5;
+             const inner = s * 0.6;
+
+             ctx.save();
+             ctx.translate(this.position.x, this.position.y);
+             ctx.rotate(this.life * 0.05);
+
+             ctx.moveTo(0, 0 - outer);
+             for (let i = 0; i < spikes; i++) {
+                ctx.rotate(Math.PI / spikes);
+                ctx.lineTo(0, 0 - inner);
+                ctx.rotate(Math.PI / spikes);
+                ctx.lineTo(0, 0 - outer);
+             }
+             ctx.closePath();
+             ctx.fill();
+             ctx.restore();
+        } else {
+            // Circle
+            ctx.arc(this.position.x, this.position.y, s, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     // Reset context
