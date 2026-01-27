@@ -18,6 +18,11 @@ export class Enemy implements IEnemy {
   type: EnemyType;
   defenseType: DefenseType;
 
+  // Visuals
+  scale: number = 0;
+  targetScale: number = 1;
+  hitFlashTimer: number = 0;
+
   waypointIndex: number = 0;
   private path: Vector2[] = [];
   private wobbleOffset: number = Math.random() * 100;
@@ -121,6 +126,10 @@ export class Enemy implements IEnemy {
   update() {
     if (this.isDead || this.reachedEnd || this.path.length === 0) return;
 
+    // Visuals
+    this.scale += (this.targetScale - this.scale) * 0.2;
+    if (this.hitFlashTimer > 0) this.hitFlashTimer--;
+
     this.updateEffects();
     this.wobbleOffset += 0.1;
 
@@ -150,24 +159,28 @@ export class Enemy implements IEnemy {
   draw(ctx: CanvasRenderingContext2D) {
     if (this.isDead || this.reachedEnd) return;
 
+    ctx.save();
+    ctx.translate(this.position.x, this.position.y);
+    ctx.scale(this.scale, this.scale);
+
     // Neon Glow
     ctx.shadowBlur = 10;
     ctx.shadowColor = this.color;
 
     // Draw body based on type
-    ctx.fillStyle = this.color;
+    ctx.fillStyle = this.hitFlashTimer > 0 ? '#ffffff' : this.color;
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
 
     ctx.beginPath();
     if (this.type === 'TANK' || this.type === 'ARMORED') {
         // Square for Tank/Armored
-        ctx.rect(this.position.x - this.radius, this.position.y - this.radius, this.radius * 2, this.radius * 2);
+        ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
     } else if (this.type === 'FAST' || this.type === 'SWARM') {
         // Triangle for Fast/Swarm
-        ctx.moveTo(this.position.x + this.radius, this.position.y);
-        ctx.lineTo(this.position.x - this.radius, this.position.y - this.radius);
-        ctx.lineTo(this.position.x - this.radius, this.position.y + this.radius);
+        ctx.moveTo(this.radius, 0);
+        ctx.lineTo(-this.radius, -this.radius);
+        ctx.lineTo(-this.radius, this.radius);
         ctx.closePath();
     } else if (this.type === 'BOSS') {
         // Octagon/Star for Boss
@@ -177,26 +190,28 @@ export class Enemy implements IEnemy {
         for (let i = 0; i < spikes * 2; i++) {
             const r = i % 2 === 0 ? outerRadius : innerRadius;
             const angle = (Math.PI * i) / spikes;
-            const x = this.position.x + Math.cos(angle) * r;
-            const y = this.position.y + Math.sin(angle) * r;
+            const x = Math.cos(angle) * r;
+            const y = Math.sin(angle) * r;
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         }
         ctx.closePath();
     } else {
         // Circle for Normal
-        ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
     }
 
     // Draw Status Effect Visuals
-    if (this.effects.has(StatusEffectType.SLOW)) {
-        ctx.fillStyle = '#67e8f9'; // Cyan tint
-    }
-    if (this.effects.has(StatusEffectType.BURN)) {
-        ctx.fillStyle = '#f97316'; // Orange tint
-    }
-    if (this.effects.has(StatusEffectType.STUN)) {
-        ctx.fillStyle = '#facc15'; // Yellow tint
+    if (this.hitFlashTimer <= 0) {
+        if (this.effects.has(StatusEffectType.SLOW)) {
+            ctx.fillStyle = '#67e8f9'; // Cyan tint
+        }
+        if (this.effects.has(StatusEffectType.BURN)) {
+            ctx.fillStyle = '#f97316'; // Orange tint
+        }
+        if (this.effects.has(StatusEffectType.STUN)) {
+            ctx.fillStyle = '#facc15'; // Yellow tint
+        }
     }
 
     ctx.fill();
@@ -212,24 +227,26 @@ export class Enemy implements IEnemy {
 
     // Background
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(this.position.x - barWidth / 2, this.position.y - yOffset, barWidth, barHeight);
+    ctx.fillRect(-barWidth / 2, -yOffset, barWidth, barHeight);
 
     // Health
     const hpColor = hpPct > 0.5 ? '#22c55e' : hpPct > 0.25 ? '#eab308' : '#ef4444';
     ctx.fillStyle = hpColor;
-    ctx.fillRect(this.position.x - barWidth / 2, this.position.y - yOffset, barWidth * hpPct, barHeight);
+    ctx.fillRect(-barWidth / 2, -yOffset, barWidth * hpPct, barHeight);
 
     // Draw Status Icons (Small dots above health bar)
     let iconOffset = 0;
     this.effects.forEach((_, type) => {
         ctx.beginPath();
-        ctx.arc(this.position.x - barWidth/2 + iconOffset, this.position.y - yOffset - 4, 3, 0, Math.PI*2);
+        ctx.arc(-barWidth/2 + iconOffset, -yOffset - 4, 3, 0, Math.PI*2);
         if (type === StatusEffectType.SLOW) ctx.fillStyle = '#06b6d4';
         if (type === StatusEffectType.BURN) ctx.fillStyle = '#f97316';
         if (type === StatusEffectType.STUN) ctx.fillStyle = '#eab308';
         ctx.fill();
         iconOffset += 8;
     });
+
+    ctx.restore();
   }
 
   takeDamage(amount: number) {
@@ -239,6 +256,9 @@ export class Enemy implements IEnemy {
     }
 
     this.hp -= amount;
+    this.hitFlashTimer = 3;
+    this.scale = 0.8; // Wince effect
+
     if (this.hp <= 0) {
       this.hp = 0;
       this.isDead = true;

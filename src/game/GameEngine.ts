@@ -56,7 +56,9 @@ export class GameEngine {
   mousePosition: Vector2 = new Vector2(0, 0);
 
   private lastModWave: number = 0;
-  // private lastTime: number = 0;
+  private lastTime: number = 0;
+  private accumulator: number = 0;
+  private readonly TIMESTEP: number = 1000 / 60; // 60 FPS Logic
   private spawnTimer: number = 0;
   private enemiesToSpawn: EnemyType[] = [];
   private onStateChange: (state: GameState) => void;
@@ -78,7 +80,7 @@ export class GameEngine {
 
     this.particlePool = new ObjectPool<Particle>(
         () => new Particle(new Vector2(0,0), ''),
-        (p, pos, col, speed, size, txt, shape) => p.reset(pos, col, speed, size, txt, shape)
+        (p, pos, col, speed, size, txt, shape, gravity) => p.reset(pos, col, speed, size, txt, shape, gravity)
     );
 
     // Init QuadTree
@@ -91,7 +93,7 @@ export class GameEngine {
     window.addEventListener('resize', this.handleResize);
 
     // Start loop
-    requestAnimationFrame(this.loop.bind(this));
+    requestAnimationFrame((t) => this.loop(t));
   }
 
   private handleResize = () => {
@@ -319,15 +321,29 @@ export class GameEngine {
     return p.distanceTo(projection);
   }
 
-  private loop() {
+  private loop(timestamp: number) {
     if (!this.isRunning) return;
 
+    const deltaTime = timestamp - this.lastTime;
+    this.lastTime = timestamp;
+
+    // Cap deltaTime to avoid spiral of death on lag spikes (e.g. background tab)
+    const cappedDelta = Math.min(deltaTime, 100);
+
     if (this.state.gameStarted && !this.state.isGameOver && !this.state.isPaused && !this.state.choosingMod) {
-      this.update();
+        this.accumulator += cappedDelta;
+        while (this.accumulator >= this.TIMESTEP) {
+            this.update();
+            this.accumulator -= this.TIMESTEP;
+        }
+    } else {
+        // Reset accumulator if paused to avoid fast-forward
+        this.accumulator = 0;
     }
+
     this.draw();
 
-    requestAnimationFrame(this.loop.bind(this));
+    requestAnimationFrame((t) => this.loop(t));
   }
 
   private update() {
@@ -557,7 +573,11 @@ export class GameEngine {
       const shape = Math.random() > 0.5 ? 'SQUARE' : 'CIRCLE';
       // Occasional star for big explosions
       const finalShape = (scale > 1.5 && Math.random() > 0.7) ? 'STAR' : shape;
-      this.particles.push(this.particlePool.get(pos, color, scale, scale, undefined, finalShape));
+
+      // Gravity only for non-circle (debris)
+      const gravity = finalShape === 'CIRCLE' ? 0 : 0.3;
+
+      this.particles.push(this.particlePool.get(pos, color, scale, scale, undefined, finalShape, gravity));
     }
   }
 
