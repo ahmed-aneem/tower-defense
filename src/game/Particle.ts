@@ -12,6 +12,7 @@ export class Particle implements IParticle {
   decay!: number;
   text?: string;
   shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE';
+  gravity: number = 0;
 
   constructor(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string, shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE') {
     this.id = Math.random().toString(36).substr(2, 9);
@@ -21,11 +22,12 @@ export class Particle implements IParticle {
     this.reset(position, color, speedMultiplier, sizeMultiplier, text, shape);
   }
 
-  reset(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string, shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE') {
+  reset(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string, shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE', gravity: number = 0) {
     this.position = position.clone();
     this.color = color;
     this.text = text;
     this.shape = shape;
+    this.gravity = gravity;
 
     if (this.text) {
         this.maxLife = 60;
@@ -50,6 +52,7 @@ export class Particle implements IParticle {
   }
 
   update() {
+    this.velocity.y += this.gravity;
     this.position = this.position.add(this.velocity);
     this.velocity = this.velocity.scale(this.decay); // Apply friction
     this.life--;
