@@ -5,7 +5,7 @@ A strategic Tower Defense game built with React, TypeScript, and HTML5 Canvas.
 ## Features
 
 - **Strategic Gameplay**: Place towers to defend your core from waves of enemies.
-- **6 Tower Types**: Basic, Sniper, Minigun, Frost, Cannon, and Laser.
+- **8 Tower Types**: Basic, Sniper, Minigun, Frost, Cannon, Laser, Tack, and Farm.
 - **Multiple Maps**: Choose from 3 distinct sectors (Serpent, Fortress, Crossing).
 - **Roguelite Mods**: Every 5 waves, choose a system upgrade to boost your defenses or economy.
 - **Advanced Mechanics**:
@@ -17,7 +17,8 @@ A strategic Tower Defense game built with React, TypeScript, and HTML5 Canvas.
 - **Special Abilities**: Call down an **Orbital Strike** to decimate enemies.
 - **Diverse Enemies**: Face off against fast swarms, armored tanks, and massive bosses.
 - **Retro-Modern Visuals**: Clean, flat neon aesthetic with particle effects.
-- **Performance Optimized**: Object pooling ensures smooth gameplay on mobile and desktop.
+- **Performance Optimized**: Object pooling, efficient rendering, and state throttling ensure smooth gameplay on mobile and desktop.
+- **Game Speed Control**: Toggle between 1x and 2x game speed.
 - **Synthesized Audio**: No external assets; all sound is generated procedurally.
 
 ## Tech Stack

@@ -21,6 +21,7 @@ export interface GameState {
   activeMods: Mod[];
   choosingMod: boolean;
   modOptions: Mod[];
+  speed: number;
 }
 
 export class GameEngine {
@@ -46,7 +47,8 @@ export class GameEngine {
     isPaused: false,
     activeMods: [],
     choosingMod: false,
-    modOptions: []
+    modOptions: [],
+    speed: 1
   };
 
   path: Vector2[];
@@ -57,11 +59,14 @@ export class GameEngine {
 
   private lastModWave: number = 0;
   private lastTime: number = 0;
+  private lastNotifyTime: number = 0;
   private accumulator: number = 0;
   private readonly TIMESTEP: number = 1000 / 60; // 60 FPS Logic
   private spawnTimer: number = 0;
   private enemiesToSpawn: EnemyType[] = [];
   private onStateChange: (state: GameState) => void;
+
+  public speedMultiplier: number = 1;
 
   // Screen shake
   private shakeIntensity: number = 0;
@@ -118,7 +123,13 @@ export class GameEngine {
 
   togglePause() {
     this.state.isPaused = !this.state.isPaused;
-    this.notifyState();
+    this.notifyState(true);
+  }
+
+  setSpeed(multiplier: number) {
+      this.speedMultiplier = multiplier;
+      this.state.speed = multiplier;
+      this.notifyState();
   }
 
   startWave() {
@@ -331,7 +342,9 @@ export class GameEngine {
     const cappedDelta = Math.min(deltaTime, 100);
 
     if (this.state.gameStarted && !this.state.isGameOver && !this.state.isPaused && !this.state.choosingMod) {
-        this.accumulator += cappedDelta;
+        // Apply speed multiplier to accumulator
+        this.accumulator += cappedDelta * this.speedMultiplier;
+
         while (this.accumulator >= this.TIMESTEP) {
             this.update();
             this.accumulator -= this.TIMESTEP;
@@ -395,9 +408,38 @@ export class GameEngine {
     this.towers.forEach(t => {
       const target = t.update(this.enemies);
 
+      if (t.type === 'FARM') {
+          if (t.cooldownTimer <= 0) {
+               // Generate Money
+               const income = 15 + (t.level * 10);
+               this.state.money += income;
+               this.createFloatingText(t.position, `+$${income}`, '#FCD34D');
+               t.cooldownTimer = t.maxCooldown;
+               this.notifyState();
+          }
+          return;
+      }
+
       if (target) {
           if (t.type === 'LASER') {
               if (Math.random() < 0.1) soundManager.playShoot(t.type);
+          } else if (t.type === 'TACK') {
+              // Shoot 8 projectiles in circle
+              const count = 8;
+              const angleStep = (Math.PI * 2) / count;
+              for(let i=0; i<count; i++) {
+                   const angle = i * angleStep;
+                   const targetPos = new Vector2(
+                       t.position.x + Math.cos(angle) * t.range,
+                       t.position.y + Math.sin(angle) * t.range
+                   );
+
+                   let damage = t.damage;
+                   const effect = t.statusEffect ? { ...t.statusEffect, sourceId: t.id } : undefined;
+
+                   this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, t.color, t.damageType, t.pierce, false, 0, effect));
+              }
+              soundManager.playShoot(t.type);
           } else {
             const isSplash = t.type === 'SPLASH';
             const splashRadius = isSplash ? 60 : 0;
@@ -611,9 +653,7 @@ export class GameEngine {
 
     this.drawGrid();
 
-    // Draw Path with Glow
-    this.ctx.shadowBlur = 15;
-    this.ctx.shadowColor = '#3b82f6';
+    // Draw Path (No Blur)
     this.ctx.beginPath();
     this.ctx.moveTo(this.path[0].x, this.path[0].y);
     for (let i = 1; i < this.path.length; i++) {
@@ -628,8 +668,6 @@ export class GameEngine {
     this.ctx.lineWidth = 3;
     this.ctx.strokeStyle = '#60a5fa';
     this.ctx.stroke();
-
-    this.ctx.shadowBlur = 0;
 
     this.towers.forEach(t => {
         t.draw(this.ctx);
@@ -654,12 +692,9 @@ export class GameEngine {
     });
     this.enemies.forEach(e => e.draw(this.ctx));
 
-    this.ctx.shadowBlur = 10;
     this.projectiles.forEach(p => {
-        this.ctx.shadowColor = p.color;
         p.draw(this.ctx)
     });
-    this.ctx.shadowBlur = 0;
 
     this.particles.forEach(p => p.draw(this.ctx));
 
@@ -715,8 +750,12 @@ export class GameEngine {
       }
   }
 
-  private notifyState() {
-      this.onStateChange({ ...this.state });
+  private notifyState(immediate: boolean = false) {
+      const now = performance.now();
+      if (immediate || now - this.lastNotifyTime > 32) { // ~30 FPS throttle
+          this.onStateChange({ ...this.state });
+          this.lastNotifyTime = now;
+      }
   }
 
   handleClick(x: number, y: number): Tower | null {

@@ -96,6 +96,28 @@ export const TOWERS = {
     damageType: DamageType.ENERGY,
     pierce: 5,
     statusEffect: { type: StatusEffectType.BURN, duration: 60, strength: 1, tickInterval: 20 }
+  },
+  TACK: {
+    name: 'Tack',
+    cost: 300,
+    range: 100,
+    damage: 15,
+    cooldown: 50,
+    color: '#e879f9', // Pinkish
+    type: 'TACK',
+    damageType: DamageType.PHYSICAL,
+    pierce: 1
+  },
+  FARM: {
+    name: 'Farm',
+    cost: 800,
+    range: 0,
+    damage: 0,
+    cooldown: 300, // 5 seconds
+    color: '#fbbf24', // Amber
+    type: 'FARM',
+    damageType: DamageType.PHYSICAL,
+    pierce: 0
   }
 } as const;
 

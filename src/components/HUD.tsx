@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair, Map as MapIcon, Cpu, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair, Map as MapIcon, Cpu, ChevronLeft, ChevronRight, Check, X, FastForward } from 'lucide-react';
 import { type GameState, GameEngine } from '../game/GameEngine';
 import { TOWERS, type TowerType, TowerTargetingMode } from '../game/Constants';
 import { Tower } from '../game/Tower';
@@ -101,6 +101,14 @@ export const HUD: React.FC<HUDProps> = ({
                 className="bg-slate-900/90 p-3 rounded-xl text-slate-400 hover:text-white border border-slate-700/50 hover:bg-slate-800 transition-all"
             >
                 {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
+            <button
+                onClick={() => engine?.current?.setSpeed(gameState.speed === 1 ? 2 : 1)}
+                className={`p-3 rounded-xl border transition-all ${gameState.speed > 1
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
+                    : 'bg-slate-900/90 text-slate-400 hover:text-white border-slate-700/50 hover:bg-slate-800'}`}
+            >
+                <FastForward size={20} fill={gameState.speed > 1 ? "currentColor" : "none"} />
             </button>
             <button
                 onClick={() => engine?.current?.togglePause()}
@@ -268,6 +276,8 @@ export const HUD: React.FC<HUDProps> = ({
                     {key === 'FROST' && <div className="w-4 h-4 bg-white rotate-45" />}
                     {key === 'SPLASH' && <div className="w-5 h-3 bg-white" />}
                     {key === 'LASER' && <div className="w-6 h-0.5 bg-white" />}
+                    {key === 'TACK' && <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 bg-slate-900 rounded-full"/></div>}
+                    {key === 'FARM' && <div className="w-4 h-4 bg-white" />}
                 </div>
 
                 <span className={`font-bold text-xs sm:text-sm tracking-wider mb-1 ${isSelected ? 'text-white' : 'text-slate-300'}`}>
