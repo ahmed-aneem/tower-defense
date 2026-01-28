@@ -163,10 +163,7 @@ export class Enemy implements IEnemy {
     ctx.translate(this.position.x, this.position.y);
     ctx.scale(this.scale, this.scale);
 
-    // Neon Glow
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = this.color;
-
+    // Neon Glow removed for performance
     // Draw body based on type
     ctx.fillStyle = this.hitFlashTimer > 0 ? '#ffffff' : this.color;
     ctx.strokeStyle = '#fff';
@@ -217,22 +214,34 @@ export class Enemy implements IEnemy {
     ctx.fill();
     ctx.stroke();
 
-    ctx.shadowBlur = 0;
+    // Cracks for damaged heavy units
+    if ((this.defenseType === DefenseType.HEAVY || this.defenseType === DefenseType.SHIELDED) && this.hp < this.maxHp * 0.5) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-this.radius/2, -this.radius/2);
+        ctx.lineTo(this.radius/2, this.radius/2);
+        ctx.moveTo(this.radius/2, -this.radius/2);
+        ctx.lineTo(-this.radius/2, this.radius/2);
+        ctx.stroke();
+    }
 
     // Draw Health Bar
-    const hpPct = this.hp / this.maxHp;
-    const barWidth = this.radius * 2;
-    const barHeight = 4;
-    const yOffset = this.radius + 8;
+    if (this.hp < this.maxHp) {
+        const hpPct = this.hp / this.maxHp;
+        const barWidth = this.radius * 2;
+        const barHeight = 4;
+        const yOffset = this.radius + 8;
 
-    // Background
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(-barWidth / 2, -yOffset, barWidth, barHeight);
+        // Background
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(-barWidth / 2, -yOffset, barWidth, barHeight);
 
-    // Health
-    const hpColor = hpPct > 0.5 ? '#22c55e' : hpPct > 0.25 ? '#eab308' : '#ef4444';
-    ctx.fillStyle = hpColor;
-    ctx.fillRect(-barWidth / 2, -yOffset, barWidth * hpPct, barHeight);
+        // Health
+        const hpColor = hpPct > 0.5 ? '#22c55e' : hpPct > 0.25 ? '#eab308' : '#ef4444';
+        ctx.fillStyle = hpColor;
+        ctx.fillRect(-barWidth / 2, -yOffset, barWidth * hpPct, barHeight);
+    }
 
     // Draw Status Icons (Small dots above health bar)
     let iconOffset = 0;

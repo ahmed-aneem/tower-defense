@@ -106,6 +106,15 @@ export class Tower implements ITower {
         return null;
     }
 
+    // Farm Logic
+    if (this.type === 'FARM') {
+        if (this.cooldownTimer > 0) {
+            this.cooldownTimer--;
+        }
+        // GameEngine checks if cooldownTimer <= 0 to generate money
+        return null;
+    }
+
     // Single pass targeting
     let target: Enemy | null = null;
     let bestMetric = this.targetingMode === TowerTargetingMode.WEAKEST || this.targetingMode === TowerTargetingMode.LAST || this.targetingMode === TowerTargetingMode.CLOSEST
@@ -202,9 +211,7 @@ export class Tower implements ITower {
     // Apply recoil (move backwards slightly)
     ctx.translate(-this.recoil, 0);
 
-    // Glow effect
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = this.color;
+    // Glow effect removed for performance
 
     // Draw Base
     ctx.fillStyle = '#1e293b'; // Slate 800
@@ -275,6 +282,47 @@ export class Tower implements ITower {
         ctx.fillRect(5, 6, 15, 2);
         ctx.fillStyle = '#f0abfc';
         ctx.fillRect(0, -2, 20, 4); // Core
+    } else if (this.type === 'TACK') {
+        // Tack Shooter
+        ctx.beginPath();
+        ctx.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx.fill();
+        // Spikes
+        ctx.fillStyle = '#cbd5e1'; // Slate 300
+        for(let i=0; i<8; i++) {
+            ctx.save();
+            ctx.rotate((Math.PI * 2 * i) / 8);
+            ctx.beginPath();
+            ctx.moveTo(10, -3);
+            ctx.lineTo(18, 0);
+            ctx.lineTo(10, 3);
+            ctx.fill();
+            ctx.restore();
+        }
+        ctx.fillStyle = this.color; // Reset for center
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (this.type === 'FARM') {
+        // Farm
+        ctx.fillStyle = '#fcd34d'; // Amber 300
+        ctx.fillRect(-15, -15, 30, 30);
+        ctx.strokeStyle = '#b45309'; // Amber 700
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-15, -15, 30, 30);
+        // Crop lines
+        ctx.beginPath();
+        ctx.moveTo(-10, -10); ctx.lineTo(10, -10);
+        ctx.moveTo(-10, 0); ctx.lineTo(10, 0);
+        ctx.moveTo(-10, 10); ctx.lineTo(10, 10);
+        ctx.stroke();
+        // Banana/Coin icon?
+        ctx.fillStyle = '#166534'; // Green
+        ctx.beginPath();
+        ctx.arc(0, -5, 4, 0, Math.PI*2);
+        ctx.arc(5, 5, 4, 0, Math.PI*2);
+        ctx.arc(-5, 5, 4, 0, Math.PI*2);
+        ctx.fill();
     } else {
       // Basic
       ctx.beginPath();
