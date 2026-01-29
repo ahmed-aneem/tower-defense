@@ -142,7 +142,7 @@ export const HUD: React.FC<HUDProps> = ({
 
       {/* Center: Selected Tower Info */}
       {selectedTower && !gameState.isGameOver && !gameState.choosingMod && (
-         <div className="pointer-events-auto self-center bg-slate-900/95 p-5 rounded-2xl border border-slate-600/50 text-white w-72 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+         <div className="pointer-events-auto self-center bg-slate-900/95 p-4 sm:p-5 rounded-2xl border border-slate-600/50 text-white w-[90%] sm:w-72 max-w-sm backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 mb-20 sm:mb-0">
              <div className="flex justify-between items-center mb-4 border-b border-slate-700/50 pb-2">
                  <div className="flex items-center gap-3">
                      <div className="w-4 h-4 rounded-full" style={{background: TOWERS[selectedTower.type].color, boxShadow: `0 0 10px ${TOWERS[selectedTower.type].color}`}} />
@@ -225,10 +225,10 @@ export const HUD: React.FC<HUDProps> = ({
 
       {/* Placement Controls */}
       {selectedTowerType && !gameState.isGameOver && (
-          <div className="absolute bottom-32 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-auto z-30">
+          <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-auto z-30">
               <button
                 onClick={onCancelPlacement}
-                className="bg-slate-800/80 hover:bg-red-500 text-white p-4 rounded-full shadow-lg border-2 border-slate-600 hover:border-red-400 transition-all backdrop-blur-sm"
+                className="bg-slate-800/80 hover:bg-red-500 text-white p-4 rounded-full shadow-lg border-2 border-slate-600 hover:border-red-400 transition-all backdrop-blur-sm active:scale-95"
               >
                   <X size={28} />
               </button>
@@ -243,7 +243,7 @@ export const HUD: React.FC<HUDProps> = ({
 
       {/* Special Abilities */}
       {gameState.gameStarted && !gameState.isGameOver && !gameState.choosingMod && (
-          <div className="absolute bottom-32 right-4 pointer-events-auto z-20">
+          <div className="absolute bottom-28 sm:bottom-32 right-4 pointer-events-auto z-20">
               <button
                   onClick={() => engine?.current?.activateAbility('ORBITAL_STRIKE')}
                   disabled={gameState.money < 500}
