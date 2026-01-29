@@ -103,6 +103,17 @@ export const TOWERS = {
     statusEffect: { type: StatusEffectType.BURN, duration: 60, strength: 1, tickInterval: 20 },
     camoDetection: false
   },
+  TESLA: {
+    name: 'Tesla',
+    cost: 450,
+    range: 200,
+    damage: 40,
+    cooldown: 60,
+    color: '#FDE047', // Yellow
+    type: 'TESLA',
+    damageType: DamageType.ENERGY,
+    pierce: 3
+  },
   TACK: {
     name: 'Tack',
     cost: 300,
