@@ -103,11 +103,17 @@ export const HUD: React.FC<HUDProps> = ({
                 {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
             </button>
             <button
-                onClick={() => engine?.current?.setSpeed(gameState.speed === 1 ? 2 : 1)}
+                onClick={() => {
+                    const nextSpeed = gameState.speed === 1 ? 2 : gameState.speed === 2 ? 4 : 1;
+                    engine?.current?.setSpeed(nextSpeed);
+                }}
                 className={`p-3 rounded-xl border transition-all ${gameState.speed > 1
                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
-                    : 'bg-slate-900/90 text-slate-400 hover:text-white border-slate-700/50 hover:bg-slate-800'}`}
+                    : 'bg-slate-900/90 text-slate-400 hover:text-white border-slate-700/50 hover:bg-slate-800'} relative`}
             >
+                <div className="absolute -top-2 -right-2 bg-emerald-500 text-black text-[10px] font-bold px-1.5 rounded-full border border-emerald-400">
+                    {gameState.speed}x
+                </div>
                 <FastForward size={20} fill={gameState.speed > 1 ? "currentColor" : "none"} />
             </button>
             <button
@@ -136,7 +142,7 @@ export const HUD: React.FC<HUDProps> = ({
 
       {/* Center: Selected Tower Info */}
       {selectedTower && !gameState.isGameOver && !gameState.choosingMod && (
-         <div className="pointer-events-auto self-center bg-slate-900/95 p-5 rounded-2xl border border-slate-600/50 text-white w-72 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+         <div className="pointer-events-auto self-center bg-slate-900/95 p-4 sm:p-5 rounded-2xl border border-slate-600/50 text-white w-[90%] sm:w-72 max-w-sm backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 mb-20 sm:mb-0">
              <div className="flex justify-between items-center mb-4 border-b border-slate-700/50 pb-2">
                  <div className="flex items-center gap-3">
                      <div className="w-4 h-4 rounded-full" style={{background: TOWERS[selectedTower.type].color, boxShadow: `0 0 10px ${TOWERS[selectedTower.type].color}`}} />
@@ -166,6 +172,12 @@ export const HUD: React.FC<HUDProps> = ({
                      <span>Type</span>
                      <span className="font-mono text-white text-[10px] bg-slate-800 px-1 rounded">{selectedTower.damageType}</span>
                  </div>
+                 {selectedTower.camoDetection && (
+                     <div className="flex justify-between text-emerald-400">
+                         <span>Camo Detect</span>
+                         <span className="font-mono">ACTIVE</span>
+                     </div>
+                 )}
              </div>
 
              {/* Targeting Control */}
@@ -213,10 +225,10 @@ export const HUD: React.FC<HUDProps> = ({
 
       {/* Placement Controls */}
       {selectedTowerType && !gameState.isGameOver && (
-          <div className="absolute bottom-32 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-auto z-30">
+          <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-auto z-30">
               <button
                 onClick={onCancelPlacement}
-                className="bg-slate-800/80 hover:bg-red-500 text-white p-4 rounded-full shadow-lg border-2 border-slate-600 hover:border-red-400 transition-all backdrop-blur-sm"
+                className="bg-slate-800/80 hover:bg-red-500 text-white p-4 rounded-full shadow-lg border-2 border-slate-600 hover:border-red-400 transition-all backdrop-blur-sm active:scale-95"
               >
                   <X size={28} />
               </button>
@@ -231,7 +243,7 @@ export const HUD: React.FC<HUDProps> = ({
 
       {/* Special Abilities */}
       {gameState.gameStarted && !gameState.isGameOver && !gameState.choosingMod && (
-          <div className="absolute bottom-32 right-4 pointer-events-auto z-20">
+          <div className="absolute bottom-28 sm:bottom-32 right-4 pointer-events-auto z-20">
               <button
                   onClick={() => engine?.current?.activateAbility('ORBITAL_STRIKE')}
                   disabled={gameState.money < 500}
@@ -258,7 +270,7 @@ export const HUD: React.FC<HUDProps> = ({
                 onClick={() => onSelectTower(isSelected ? null : key as TowerType)}
                 disabled={!canAfford}
                 className={`
-                  relative group flex flex-col items-center p-2 sm:p-3 rounded-xl border transition-all duration-200 min-w-[70px] sm:min-w-[90px]
+                  relative group flex flex-col items-center p-2 sm:p-3 rounded-xl border transition-all duration-200 min-w-[80px] sm:min-w-[100px] flex-shrink-0
                   ${isSelected
                     ? 'bg-slate-800 border-blue-400 ring-2 ring-blue-500/50 -translate-y-2 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.5)]'
                     : 'bg-slate-900/80 border-slate-700 hover:border-slate-500 hover:bg-slate-800'}
@@ -266,7 +278,7 @@ export const HUD: React.FC<HUDProps> = ({
                 `}
               >
                 <div
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg mb-1 sm:mb-3 shadow-lg flex items-center justify-center transition-transform group-hover:scale-110"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg mb-1 sm:mb-3 shadow-lg flex items-center justify-center transition-transform group-hover:scale-110"
                     style={{ backgroundColor: tower.color, boxShadow: isSelected ? `0 0 15px ${tower.color}` : 'none' }}
                 >
                     {/* Simple Icon Representation */}
@@ -278,6 +290,7 @@ export const HUD: React.FC<HUDProps> = ({
                     {key === 'LASER' && <div className="w-6 h-0.5 bg-white" />}
                     {key === 'TACK' && <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 bg-slate-900 rounded-full"/></div>}
                     {key === 'FARM' && <div className="w-4 h-4 bg-white" />}
+                    {key === 'PLASMA' && <div className="w-6 h-6 rounded-full border-2 border-white bg-violet-300" />}
                 </div>
 
                 <span className={`font-bold text-xs sm:text-sm tracking-wider mb-1 ${isSelected ? 'text-white' : 'text-slate-300'}`}>

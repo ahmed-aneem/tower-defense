@@ -38,7 +38,8 @@ export const TOWERS = {
     color: '#3B82F6', // Blue
     type: 'BASIC',
     damageType: DamageType.PHYSICAL,
-    pierce: 1
+    pierce: 1,
+    camoDetection: false
   },
   SNIPER: {
     name: 'Sniper',
@@ -49,7 +50,8 @@ export const TOWERS = {
     color: '#10B981', // Green
     type: 'SNIPER',
     damageType: DamageType.PHYSICAL,
-    pierce: 3
+    pierce: 3,
+    camoDetection: true
   },
   RAPID: {
     name: 'Minigun',
@@ -60,7 +62,8 @@ export const TOWERS = {
     color: '#F59E0B', // Amber
     type: 'RAPID',
     damageType: DamageType.PHYSICAL,
-    pierce: 1
+    pierce: 1,
+    camoDetection: false
   },
   FROST: {
     name: 'Frost',
@@ -72,7 +75,8 @@ export const TOWERS = {
     type: 'FROST',
     damageType: DamageType.COLD,
     pierce: 999,
-    statusEffect: { type: StatusEffectType.SLOW, duration: 60, strength: 0.5 }
+    statusEffect: { type: StatusEffectType.SLOW, duration: 60, strength: 0.5 },
+    camoDetection: true
   },
   SPLASH: {
     name: 'Cannon',
@@ -83,7 +87,8 @@ export const TOWERS = {
     color: '#ef4444', // Red
     type: 'SPLASH',
     damageType: DamageType.EXPLOSIVE,
-    pierce: 20
+    pierce: 20,
+    camoDetection: false
   },
   LASER: {
     name: 'Laser',
@@ -95,7 +100,8 @@ export const TOWERS = {
     type: 'LASER',
     damageType: DamageType.ENERGY,
     pierce: 5,
-    statusEffect: { type: StatusEffectType.BURN, duration: 60, strength: 1, tickInterval: 20 }
+    statusEffect: { type: StatusEffectType.BURN, duration: 60, strength: 1, tickInterval: 20 },
+    camoDetection: false
   },
   TACK: {
     name: 'Tack',
@@ -106,7 +112,8 @@ export const TOWERS = {
     color: '#e879f9', // Pinkish
     type: 'TACK',
     damageType: DamageType.PHYSICAL,
-    pierce: 1
+    pierce: 1,
+    camoDetection: false
   },
   FARM: {
     name: 'Farm',
@@ -117,7 +124,20 @@ export const TOWERS = {
     color: '#fbbf24', // Amber
     type: 'FARM',
     damageType: DamageType.PHYSICAL,
-    pierce: 0
+    pierce: 0,
+    camoDetection: false
+  },
+  PLASMA: {
+    name: 'Plasma',
+    cost: 2000,
+    range: 250,
+    damage: 25,
+    cooldown: 10,
+    color: '#8b5cf6', // Violet-500
+    type: 'PLASMA',
+    damageType: DamageType.ENERGY,
+    pierce: 10,
+    camoDetection: true
   }
 } as const;
 
@@ -131,7 +151,9 @@ export const ENEMIES = {
     color: '#EF4444', // Red
     radius: 12,
     defenseType: DefenseType.NONE,
-    children: [] as const
+    children: [] as const,
+    isCamo: false,
+    isRegen: false
   },
   FAST: {
     hp: 30,
@@ -140,7 +162,9 @@ export const ENEMIES = {
     color: '#EC4899', // Pink
     radius: 10,
     defenseType: DefenseType.NONE,
-    children: ['SWARM'] as const
+    children: ['SWARM'] as const,
+    isCamo: true, // Invisible!
+    isRegen: false
   },
   TANK: {
     hp: 200,
@@ -149,7 +173,9 @@ export const ENEMIES = {
     color: '#7F1D1D', // Dark Red
     radius: 16,
     defenseType: DefenseType.HEAVY,
-    children: ['ARMORED', 'ARMORED'] as const
+    children: ['ARMORED', 'ARMORED'] as const,
+    isCamo: false,
+    isRegen: true // Heals!
   },
   SWARM: {
     hp: 15,
@@ -158,7 +184,9 @@ export const ENEMIES = {
     color: '#f97316', // Orange
     radius: 8,
     defenseType: DefenseType.NONE,
-    children: [] as const
+    children: [] as const,
+    isCamo: false,
+    isRegen: false
   },
   ARMORED: {
     hp: 150,
@@ -167,7 +195,9 @@ export const ENEMIES = {
     color: '#57534e', // Stone
     radius: 14,
     defenseType: DefenseType.HEAVY,
-    children: ['NORMAL', 'NORMAL'] as const
+    children: ['NORMAL', 'NORMAL'] as const,
+    isCamo: false,
+    isRegen: false
   },
   BOSS: {
     hp: 1000,
@@ -176,7 +206,9 @@ export const ENEMIES = {
     color: '#4c1d95', // Violet
     radius: 25,
     defenseType: DefenseType.SHIELDED,
-    children: ['TANK', 'TANK', 'FAST', 'FAST'] as const
+    children: ['TANK', 'TANK', 'FAST', 'FAST'] as const,
+    isCamo: true,
+    isRegen: true
   }
 } as const;
 

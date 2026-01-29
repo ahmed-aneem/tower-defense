@@ -18,6 +18,10 @@ export class Enemy implements IEnemy {
   type: EnemyType;
   defenseType: DefenseType;
 
+  isCamo: boolean;
+  isRegen: boolean;
+  lastDamageTime: number = 0; // For regen delay
+
   // Visuals
   scale: number = 0;
   targetScale: number = 1;
@@ -39,6 +43,8 @@ export class Enemy implements IEnemy {
     this.radius = config.radius;
     this.color = config.color;
     this.defenseType = config.defenseType;
+    this.isCamo = config.isCamo;
+    this.isRegen = config.isRegen;
 
     if (startPos) {
         this.position = startPos.clone();
@@ -135,6 +141,17 @@ export class Enemy implements IEnemy {
 
     const currentSpeed = this.speed * this.getSpeedMultiplier();
 
+    // Regen Logic
+    if (this.isRegen && this.hp < this.maxHp && this.hp > 0 && !this.isDead) {
+         if (this.lastDamageTime > 60) { // Delay before regen starts
+             this.hp = Math.min(this.maxHp, this.hp + (this.maxHp * 0.01));
+         } else {
+             this.lastDamageTime++;
+         }
+    } else {
+        this.lastDamageTime++; // Increment anyway to allow regen to start if we stop taking damage
+    }
+
     // If stunned/stopped, don't move
     if (currentSpeed <= 0.01) return;
 
@@ -163,11 +180,19 @@ export class Enemy implements IEnemy {
     ctx.translate(this.position.x, this.position.y);
     ctx.scale(this.scale, this.scale);
 
+    if (this.isCamo) {
+        ctx.globalAlpha = 0.5; // Camo is semi-transparent
+    }
+
     // Neon Glow removed for performance
     // Draw body based on type
     ctx.fillStyle = this.hitFlashTimer > 0 ? '#ffffff' : this.color;
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
+
+    if (this.isCamo) {
+        ctx.setLineDash([2, 2]); // Dotted line for camo
+    }
 
     ctx.beginPath();
     if (this.type === 'TANK' || this.type === 'ARMORED') {
@@ -227,11 +252,12 @@ export class Enemy implements IEnemy {
     }
 
     // Draw Health Bar
+    const barWidth = this.radius * 2;
+    const yOffset = this.radius + 8;
+
     if (this.hp < this.maxHp) {
         const hpPct = this.hp / this.maxHp;
-        const barWidth = this.radius * 2;
         const barHeight = 4;
-        const yOffset = this.radius + 8;
 
         // Background
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -255,6 +281,19 @@ export class Enemy implements IEnemy {
         iconOffset += 8;
     });
 
+    if (this.isRegen) {
+        // Heart icon
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath();
+        const iconY = -this.radius - 12;
+
+        ctx.beginPath();
+        ctx.moveTo(0, iconY);
+        ctx.bezierCurveTo(-3, iconY - 3, -6, iconY + 2, 0, iconY + 5);
+        ctx.bezierCurveTo(6, iconY + 2, 3, iconY - 3, 0, iconY);
+        ctx.fill();
+    }
+
     ctx.restore();
   }
 
@@ -265,6 +304,7 @@ export class Enemy implements IEnemy {
     }
 
     this.hp -= amount;
+    this.lastDamageTime = 0; // Reset regen timer
     this.hitFlashTimer = 3;
     this.scale = 0.8; // Wince effect
 

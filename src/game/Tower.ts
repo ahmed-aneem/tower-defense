@@ -21,6 +21,7 @@ export class Tower implements ITower {
   damageType: DamageType;
   pierce: number;
   statusEffect?: StatusEffect;
+  camoDetection: boolean;
 
   // Visual recoil
   recoil: number = 0;
@@ -39,6 +40,8 @@ export class Tower implements ITower {
     this.pierce = config.pierce;
     // @ts-ignore - Config has it, but Typescript inference might lag if not explicit in Constants types yet
     this.statusEffect = config.statusEffect;
+    // @ts-ignore
+    this.camoDetection = config.camoDetection;
   }
 
   get upgradeCost(): number {
@@ -60,12 +63,34 @@ export class Tower implements ITower {
         if (this.statusEffect) {
             this.statusEffect.strength *= 1.2; // Buff effect
         }
+        if (this.type === 'SNIPER') this.camoDetection = true; // Sniper gets Camo at level 2
     } else if (this.level === 3) {
-        this.damage = Math.ceil(this.damage * 1.5);
-        this.maxCooldown = Math.max(1, Math.floor(this.maxCooldown * 0.8));
-        this.pierce += 2;
-        if (this.statusEffect) {
-            this.statusEffect.duration *= 1.5; // Longer duration
+        // Advanced Upgrades
+        this.camoDetection = true; // All towers get Camo at level 3
+
+        if (this.type === 'SNIPER') {
+            // Railgun
+            this.damage *= 2;
+            this.pierce = 20;
+            this.damageType = DamageType.ENERGY; // Change to Energy
+        } else if (this.type === 'BASIC') {
+            // Double Tap
+            this.maxCooldown = Math.floor(this.maxCooldown / 2);
+        } else if (this.type === 'SPLASH') {
+            // Cluster Bomb (Logic handled in Projectile but stats buff here)
+            this.range += 50;
+            this.damage = Math.ceil(this.damage * 1.2);
+        } else if (this.type === 'PLASMA') {
+             this.damage = Math.ceil(this.damage * 2);
+             this.range += 50;
+        } else {
+             // Generic Level 3
+             this.damage = Math.ceil(this.damage * 1.5);
+             this.maxCooldown = Math.max(1, Math.floor(this.maxCooldown * 0.8));
+             this.pierce += 2;
+             if (this.statusEffect) {
+                this.statusEffect.duration *= 1.5;
+             }
         }
     }
 
@@ -122,6 +147,9 @@ export class Tower implements ITower {
 
     for (const e of enemies) {
         if (e.isDead || e.reachedEnd) continue;
+        // Camo Check
+        if (e.isCamo && !this.camoDetection) continue;
+
         const dist = this.position.distanceTo(e.position);
         if (dist > this.range) continue;
 
@@ -323,6 +351,22 @@ export class Tower implements ITower {
         ctx.arc(5, 5, 4, 0, Math.PI*2);
         ctx.arc(-5, 5, 4, 0, Math.PI*2);
         ctx.fill();
+    } else if (this.type === 'PLASMA') {
+        // Plasma Tower
+        ctx.beginPath();
+        ctx.arc(0, 0, 12, 0, Math.PI * 2);
+        ctx.fill();
+        // Glowy core
+        ctx.fillStyle = '#c4b5fd'; // Violet 300
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+        // Rings
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI*2);
+        ctx.stroke();
     } else {
       // Basic
       ctx.beginPath();

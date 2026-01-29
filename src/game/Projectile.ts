@@ -18,6 +18,7 @@ export class Projectile implements IProjectile {
   damageType: DamageType = DamageType.PHYSICAL;
   hitList: Set<string> = new Set();
   statusEffect?: StatusEffect;
+  isCluster: boolean = false;
 
   constructor(
       startPos: Vector2,
@@ -28,7 +29,8 @@ export class Projectile implements IProjectile {
       pierce: number = 1,
       isSplash: boolean = false,
       splashRadius: number = 0,
-      statusEffect?: StatusEffect
+      statusEffect?: StatusEffect,
+      isCluster: boolean = false
   ) {
     this.id = Math.random().toString(36).substr(2, 9);
     this.position = startPos.clone();
@@ -41,6 +43,7 @@ export class Projectile implements IProjectile {
     this.isSplash = isSplash;
     this.splashRadius = splashRadius;
     this.statusEffect = statusEffect;
+    this.isCluster = isCluster;
 
     // If real positions provided, init velocity
     if (targetPos) {
@@ -58,7 +61,8 @@ export class Projectile implements IProjectile {
       pierce: number,
       isSplash: boolean = false,
       splashRadius: number = 0,
-      statusEffect?: StatusEffect
+      statusEffect?: StatusEffect,
+      isCluster: boolean = false
   ) {
     this.active = true;
     this.position = startPos.clone();
@@ -69,6 +73,7 @@ export class Projectile implements IProjectile {
     this.isSplash = isSplash;
     this.splashRadius = splashRadius;
     this.statusEffect = statusEffect;
+    this.isCluster = isCluster;
     this.targetId = null;
     this.hitList.clear();
 
