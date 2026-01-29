@@ -56,6 +56,7 @@ export class GameEngine {
   isRunning: boolean = true;
   placementMode: TowerType | null = null;
   mousePosition: Vector2 = new Vector2(0, 0);
+  gridCanvas: HTMLCanvasElement | null = null;
 
   private lastModWave: number = 0;
   private lastTime: number = 0;
@@ -80,7 +81,7 @@ export class GameEngine {
     // Init Pools
     this.projectilePool = new ObjectPool<Projectile>(
         () => new Projectile(new Vector2(0,0), new Vector2(0,0), 0, ''),
-        (p, start, target, dmg, col, type, pierce, splash, rad, effect) => p.reset(start, target, dmg, col, type, pierce, splash, rad, effect)
+        (p, start, target, dmg, col, type, pierce, splash, rad, effect, isCluster) => p.reset(start, target, dmg, col, type, pierce, splash, rad, effect, isCluster)
     );
 
     this.particlePool = new ObjectPool<Particle>(
@@ -113,6 +114,34 @@ export class GameEngine {
   private updateCanvasSize() {
       this.canvas.width = GAME_WIDTH;
       this.canvas.height = GAME_HEIGHT;
+      this.preRenderGrid();
+  }
+
+  private preRenderGrid() {
+      if (!this.gridCanvas) {
+          this.gridCanvas = document.createElement('canvas');
+      }
+      this.gridCanvas.width = GAME_WIDTH;
+      this.gridCanvas.height = GAME_HEIGHT;
+      const ctx = this.gridCanvas.getContext('2d')!;
+
+      ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
+      ctx.lineWidth = 1;
+
+      const cellSize = 40;
+      for (let x = 0; x <= GAME_WIDTH; x += cellSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, GAME_HEIGHT);
+          ctx.stroke();
+      }
+
+      for (let y = 0; y <= GAME_HEIGHT; y += cellSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(GAME_WIDTH, y);
+          ctx.stroke();
+      }
   }
 
   startGame() {
@@ -437,12 +466,13 @@ export class GameEngine {
                    let damage = t.damage;
                    const effect = t.statusEffect ? { ...t.statusEffect, sourceId: t.id } : undefined;
 
-                   this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, t.color, t.damageType, t.pierce, false, 0, effect));
+                   this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, t.color, t.damageType, t.pierce, false, 0, effect, false));
               }
               soundManager.playShoot(t.type);
           } else {
             const isSplash = t.type === 'SPLASH';
             const splashRadius = isSplash ? 60 : 0;
+            const isCluster = isSplash && t.level >= 3;
 
             // Check Critical Hit Mod
             let damage = t.damage;
@@ -453,7 +483,7 @@ export class GameEngine {
             }
 
             const effect = t.statusEffect ? { ...t.statusEffect, sourceId: t.id } : undefined;
-            this.projectiles.push(this.projectilePool.get(t.position, target.position, damage, color, t.damageType, t.pierce, isSplash, splashRadius, effect));
+            this.projectiles.push(this.projectilePool.get(t.position, target.position, damage, color, t.damageType, t.pierce, isSplash, splashRadius, effect, isCluster));
             soundManager.playShoot(t.type);
             this.createExplosion(t.position, t.color, 3, 0.5);
           }
@@ -511,6 +541,31 @@ export class GameEngine {
                 });
                 this.createExplosion(p.position, p.color, 20, 1.5);
                 soundManager.playExplosion();
+
+                // Cluster Bomb Logic
+                if (p.isCluster) {
+                     for(let j=0; j<5; j++) {
+                          const angle = (Math.PI * 2 * j) / 5;
+                          const clusterTarget = new Vector2(
+                              p.position.x + Math.cos(angle) * 100,
+                              p.position.y + Math.sin(angle) * 100
+                          );
+                          // Spawn smaller bombs
+                          this.projectiles.push(this.projectilePool.get(
+                              p.position,
+                              clusterTarget,
+                              Math.floor(p.damage * 0.3),
+                              '#fca5a5',
+                              DamageType.EXPLOSIVE,
+                              1,
+                              true, // isSplash
+                              30, // smaller radius
+                              undefined,
+                              false // not cluster again
+                          ));
+                     }
+                }
+
                 p.active = false;
             } else {
                 e.takeDamage(finalDamage);
@@ -651,7 +706,11 @@ export class GameEngine {
     this.ctx.fillStyle = '#0f172a';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.drawGrid();
+    if (this.gridCanvas) {
+        this.ctx.drawImage(this.gridCanvas, 0, 0);
+    } else {
+        this.drawGrid();
+    }
 
     // Draw Path (No Blur)
     this.ctx.beginPath();

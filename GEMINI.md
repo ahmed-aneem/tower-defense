@@ -15,15 +15,16 @@ This is a modern Tower Defense game built with React, TypeScript, and HTML5 Canv
 
 ## Features
 
-- **Game Speed**: Adjustable game speed (1x, 2x).
+- **Game Speed**: Adjustable game speed (1x, 2x, 4x).
 
-- **Towers**: 8 Types (Basic, Sniper, Rapid, Frost, Splash, Laser, Tack, Farm).
-- **Upgrades**: Towers can be upgraded to Level 3, gaining stats and visual changes.
+- **Towers**: 9 Types (Basic, Sniper, Rapid, Frost, Splash, Laser, Tack, Farm, Plasma).
+- **Upgrades**: Deep Level 3 upgrades (e.g., Railgun, Double Tap, Cluster Bomb, Plasma Overdrive).
 - **Targeting**: Towers have configurable targeting priorities (First, Last, Strongest, Weakest, Closest).
 - **Maps**: 3 distinct layouts with different strategies.
 - **Mods**: System upgrades (Damage, Range, Economy, etc.) offered periodically.
 - **Mechanics**:
     - **Damage Types**: Physical, Explosive, Energy, Cold.
+    - **Enemy Properties**: Camo (Invisible) and Regen (Healing) mechanics.
     - **Status Effects**: Robust system (`src/game/StatusEffects.ts`) for SLOW, BURN, STUN, WEAKEN.
     - **Resistances**: Enemies can be Heavy (Armored) or Shielded.
     - **Pierce**: Projectiles can hit multiple enemies.
