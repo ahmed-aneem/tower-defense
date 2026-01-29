@@ -276,6 +276,7 @@ export const HUD: React.FC<HUDProps> = ({
                     {key === 'FROST' && <div className="w-4 h-4 bg-white rotate-45" />}
                     {key === 'SPLASH' && <div className="w-5 h-3 bg-white" />}
                     {key === 'LASER' && <div className="w-6 h-0.5 bg-white" />}
+                    {key === 'TESLA' && <Zap size={24} className="text-white fill-current" />}
                     {key === 'TACK' && <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 bg-slate-900 rounded-full"/></div>}
                     {key === 'FARM' && <div className="w-4 h-4 bg-white" />}
                 </div>

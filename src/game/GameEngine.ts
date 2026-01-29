@@ -24,6 +24,14 @@ export interface GameState {
   speed: number;
 }
 
+export interface LightningBolt {
+    points: Vector2[];
+    life: number;
+    maxLife: number;
+    color: string;
+    width: number;
+}
+
 export class GameEngine {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
@@ -32,6 +40,7 @@ export class GameEngine {
   towers: Tower[] = [];
   projectiles: Projectile[] = [];
   particles: Particle[] = [];
+  lightningBolts: LightningBolt[] = [];
 
   projectilePool: ObjectPool<Projectile>;
   particlePool: ObjectPool<Particle>;
@@ -423,6 +432,9 @@ export class GameEngine {
       if (target) {
           if (t.type === 'LASER') {
               if (Math.random() < 0.1) soundManager.playShoot(t.type);
+          } else if (t.type === 'TESLA') {
+              this.fireTesla(t, target);
+              t.cooldownTimer = t.maxCooldown;
           } else if (t.type === 'TACK') {
               // Shoot 8 projectiles in circle
               const count = 8;
@@ -589,6 +601,14 @@ export class GameEngine {
       }
     }
 
+    // Update Lightning
+    for (let i = this.lightningBolts.length - 1; i >= 0; i--) {
+        this.lightningBolts[i].life--;
+        if (this.lightningBolts[i].life <= 0) {
+            this.lightningBolts.splice(i, 1);
+        }
+    }
+
     // Decay shake
     if (this.shakeIntensity > 0) {
       this.shakeIntensity *= 0.9;
@@ -625,6 +645,122 @@ export class GameEngine {
 
   private createFloatingText(pos: Vector2, text: string, color: string) {
       this.particles.push(this.particlePool.get(pos, color, 1, 1, text));
+  }
+
+  private fireTesla(tower: Tower, initialTarget: Enemy) {
+      const targets: Enemy[] = [initialTarget];
+      let current = initialTarget;
+
+      // Damage initial
+      const initialDmg = this.calculateDamage(tower.damage, tower.damageType, initialTarget.defenseType);
+      initialTarget.takeDamage(initialDmg);
+      if (tower.statusEffect) initialTarget.applyEffect(tower.statusEffect);
+
+      // Chain
+      for (let i = 0; i < tower.pierce; i++) {
+          let bestCandidate: Enemy | null = null;
+          let bestDist = 200; // Chain range
+
+          // Query QuadTree for efficiency
+          const candidates = this.quadTree.queryCircle(current.position, bestDist);
+
+          for (const item of candidates) {
+              const e = item as Enemy;
+              if (e.isDead || targets.includes(e) || e.reachedEnd) continue;
+
+              const dist = current.position.distanceTo(e.position);
+              if (dist < bestDist) {
+                  bestDist = dist;
+                  bestCandidate = e;
+              }
+          }
+
+          if (bestCandidate) {
+              // Create Bolt Segment
+              const points: Vector2[] = [];
+              const segments = 5;
+              const start = current.position;
+              const end = bestCandidate.position;
+
+              points.push(start);
+              for(let j=1; j<segments; j++) {
+                  const t = j / segments;
+                  const bx = start.x + (end.x - start.x) * t;
+                  const by = start.y + (end.y - start.y) * t;
+                  // Jitter
+                  const perpX = -(end.y - start.y);
+                  const perpY = (end.x - start.x);
+                  const len = Math.sqrt(perpX*perpX + perpY*perpY);
+                  const jitter = (Math.random() - 0.5) * 20; // 20px jitter
+
+                  points.push(new Vector2(
+                      bx + (perpX/len) * jitter,
+                      by + (perpY/len) * jitter
+                  ));
+              }
+              points.push(end);
+
+              this.lightningBolts.push({
+                  points,
+                  life: 10,
+                  maxLife: 10,
+                  color: tower.color,
+                  width: 3
+              });
+
+              current = bestCandidate;
+              targets.push(current);
+
+              // Damage chained
+              const dmg = this.calculateDamage(Math.floor(tower.damage * 0.8), tower.damageType, current.defenseType);
+              current.takeDamage(dmg);
+              if (tower.statusEffect) current.applyEffect(tower.statusEffect);
+              this.createExplosion(current.position, tower.color, 2, 0.5);
+          } else {
+              break;
+          }
+      }
+
+      // Create initial bolt from tower to first target
+      const points: Vector2[] = [];
+      const segments = 6;
+      const start = tower.position;
+      const end = initialTarget.position;
+
+      points.push(start);
+      for(let j=1; j<segments; j++) {
+          const t = j / segments;
+          const bx = start.x + (end.x - start.x) * t;
+          const by = start.y + (end.y - start.y) * t;
+          const perpX = -(end.y - start.y);
+          const perpY = (end.x - start.x);
+          const len = Math.sqrt(perpX*perpX + perpY*perpY);
+          const jitter = (Math.random() - 0.5) * 15;
+
+          points.push(new Vector2(
+              bx + (perpX/len) * jitter,
+              by + (perpY/len) * jitter
+          ));
+      }
+      points.push(end);
+
+      this.lightningBolts.push({
+          points,
+          life: 10,
+          maxLife: 10,
+          color: '#FFF', // Core beam white
+          width: 4
+      });
+      this.lightningBolts.push({
+          points: [...points], // Copy for outer glow
+          life: 10,
+          maxLife: 10,
+          color: tower.color,
+          width: 8
+      });
+
+      this.shakeIntensity = 5;
+      soundManager.playShoot('BASIC'); // Placeholder sound
   }
 
   private calculateDamage(amount: number, type: DamageType, defense: DefenseType): number {
@@ -694,6 +830,23 @@ export class GameEngine {
 
     this.projectiles.forEach(p => {
         p.draw(this.ctx)
+    });
+
+    this.lightningBolts.forEach(bolt => {
+        if (bolt.points.length < 2) return;
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.moveTo(bolt.points[0].x, bolt.points[0].y);
+        for(let i=1; i<bolt.points.length; i++) {
+            this.ctx.lineTo(bolt.points[i].x, bolt.points[i].y);
+        }
+        this.ctx.strokeStyle = bolt.color;
+        this.ctx.lineWidth = bolt.width;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.ctx.globalAlpha = bolt.life / bolt.maxLife;
+        this.ctx.stroke();
+        this.ctx.restore();
     });
 
     this.particles.forEach(p => p.draw(this.ctx));

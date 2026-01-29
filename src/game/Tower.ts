@@ -282,6 +282,38 @@ export class Tower implements ITower {
         ctx.fillRect(5, 6, 15, 2);
         ctx.fillStyle = '#f0abfc';
         ctx.fillRect(0, -2, 20, 4); // Core
+    } else if (this.type === 'TESLA') {
+        // Coil Base
+        ctx.fillStyle = '#94a3b8'; // Slate 400
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Coil Turns
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        for(let i=0; i<3; i++) {
+             ctx.beginPath();
+             ctx.arc(0, 0, 8 - (i*2), 0, Math.PI * 2);
+             ctx.stroke();
+        }
+
+        // Top Sphere
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Static sparks
+        if (Math.random() < 0.2) {
+             ctx.strokeStyle = '#fff';
+             ctx.lineWidth = 1;
+             const angle = Math.random() * Math.PI * 2;
+             ctx.beginPath();
+             ctx.moveTo(Math.cos(angle)*4, Math.sin(angle)*4);
+             ctx.lineTo(Math.cos(angle)*12, Math.sin(angle)*12);
+             ctx.stroke();
+        }
     } else if (this.type === 'TACK') {
         // Tack Shooter
         ctx.beginPath();

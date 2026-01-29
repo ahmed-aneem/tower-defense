@@ -227,11 +227,12 @@ export class Enemy implements IEnemy {
     }
 
     // Draw Health Bar
+    const barWidth = this.radius * 2;
+    const yOffset = this.radius + 8;
+
     if (this.hp < this.maxHp) {
         const hpPct = this.hp / this.maxHp;
-        const barWidth = this.radius * 2;
         const barHeight = 4;
-        const yOffset = this.radius + 8;
 
         // Background
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
