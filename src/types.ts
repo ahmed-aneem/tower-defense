@@ -60,5 +60,5 @@ export interface IParticle extends GameEntity {
   color: string;
   size: number;
   text?: string;
-  shape?: 'CIRCLE' | 'SQUARE' | 'STAR';
+  shape?: 'CIRCLE' | 'SQUARE' | 'STAR' | 'POP';
 }

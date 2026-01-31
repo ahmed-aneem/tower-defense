@@ -41,6 +41,56 @@ export const HUD: React.FC<HUDProps> = ({
     setIsMuted(!isMuted);
   };
 
+  // Keyboard Shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if Mod Selection or Game Over
+      if (gameState.isGameOver || gameState.choosingMod) return;
+
+      switch(e.key) {
+        case ' ':
+          if (!gameState.gameStarted) {
+             engine?.current?.startGame();
+          } else if (gameState.waveActive) {
+             // Toggle Speed
+             const nextSpeed = gameState.speed === 1 ? 2 : gameState.speed === 2 ? 4 : 1;
+             engine?.current?.setSpeed(nextSpeed);
+          } else {
+             engine?.current?.startWave();
+          }
+          break;
+        case 'Escape':
+          if (selectedTowerType) {
+              onCancelPlacement();
+          } else if (selectedTower) {
+              onDeselect();
+          } else {
+              engine?.current?.togglePause();
+          }
+          break;
+        case 'Backspace':
+        case 'Delete':
+          if (selectedTower) onSellTower();
+          break;
+        case 'u':
+        case 'U':
+          if (selectedTower && engine?.current) engine.current.upgradeTower(selectedTower);
+          break;
+      }
+
+      // Tower Selection 1-0
+      const towerKeys = ['1','2','3','4','5','6','7','8','9','0'];
+      const towerTypes = Object.keys(TOWERS) as TowerType[];
+      const idx = towerKeys.indexOf(e.key);
+      if (idx !== -1 && idx < towerTypes.length) {
+          onSelectTower(towerTypes[idx]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState, selectedTower, selectedTowerType, engine]);
+
   const cycleTargetingMode = () => {
       if (!selectedTower) return;
       const modes = Object.values(TowerTargetingMode);
@@ -101,6 +151,15 @@ export const HUD: React.FC<HUDProps> = ({
                 className="bg-slate-900/90 p-3 rounded-xl text-slate-400 hover:text-white border border-slate-700/50 hover:bg-slate-800 transition-all"
             >
                 {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
+            <button
+                onClick={() => engine?.current?.toggleAutoStart()}
+                className={`p-3 rounded-xl border transition-all ${gameState.autoStart
+                    ? 'bg-purple-500/20 text-purple-400 border-purple-500/50'
+                    : 'bg-slate-900/90 text-slate-400 hover:text-white border-slate-700/50 hover:bg-slate-800'}`}
+                title="Auto Start Rounds"
+            >
+                <RotateCw size={20} className={gameState.autoStart ? "animate-spin-slow" : ""} />
             </button>
             <button
                 onClick={() => {
@@ -457,6 +516,11 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
         </div>
       )}
+
+      {/* Shortcuts Help */}
+      <div className="absolute bottom-4 left-4 pointer-events-none text-[10px] text-slate-500 font-mono hidden sm:block">
+          [SPACE] Start/Speed &nbsp; [ESC] Cancel/Pause &nbsp; [1-0] Select Tower &nbsp; [U] Upgrade &nbsp; [BKSP] Sell
+      </div>
     </div>
   );
 };

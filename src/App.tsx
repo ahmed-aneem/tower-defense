@@ -20,7 +20,8 @@ function App() {
     activeMods: [],
     choosingMod: false,
     modOptions: [],
-    speed: 1
+    speed: 1,
+    autoStart: false
   });
   const [selectedTowerType, setSelectedTowerType] = useState<TowerType | null>(null);
   const [selectedTower, setSelectedTower] = useState<Tower | null>(null);

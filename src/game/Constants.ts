@@ -46,7 +46,7 @@ export const TOWERS = {
     cost: 150,
     range: 400,
     damage: 100,
-    cooldown: 120,
+    cooldown: 100,
     color: '#10B981', // Green
     type: 'SNIPER',
     damageType: DamageType.PHYSICAL,
@@ -128,7 +128,7 @@ export const TOWERS = {
   },
   FARM: {
     name: 'Farm',
-    cost: 800,
+    cost: 600,
     range: 0,
     damage: 0,
     cooldown: 300, // 5 seconds

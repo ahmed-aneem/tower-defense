@@ -11,10 +11,10 @@ export class Particle implements IParticle {
   size!: number;
   decay!: number;
   text?: string;
-  shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE';
+  shape: 'CIRCLE' | 'SQUARE' | 'STAR' | 'POP' = 'CIRCLE';
   gravity: number = 0;
 
-  constructor(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string, shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE') {
+  constructor(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string, shape: 'CIRCLE' | 'SQUARE' | 'STAR' | 'POP' = 'CIRCLE') {
     this.id = Math.random().toString(36).substr(2, 9);
     this.position = position.clone();
     this.color = color;
@@ -22,7 +22,7 @@ export class Particle implements IParticle {
     this.reset(position, color, speedMultiplier, sizeMultiplier, text, shape);
   }
 
-  reset(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string, shape: 'CIRCLE' | 'SQUARE' | 'STAR' = 'CIRCLE', gravity: number = 0) {
+  reset(position: Vector2, color: string, speedMultiplier: number = 1, sizeMultiplier: number = 1, text?: string, shape: 'CIRCLE' | 'SQUARE' | 'STAR' | 'POP' = 'CIRCLE', gravity: number = 0) {
     this.position = position.clone();
     this.color = color;
     this.text = text;
@@ -77,10 +77,6 @@ export class Particle implements IParticle {
         ctx.fillText(this.text, this.position.x, this.position.y);
 
     } else {
-        // Add glow
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
-
         ctx.fillStyle = this.color;
         ctx.beginPath();
 
@@ -112,6 +108,12 @@ export class Particle implements IParticle {
              ctx.closePath();
              ctx.fill();
              ctx.restore();
+        } else if (this.shape === 'POP') {
+             ctx.strokeStyle = this.color;
+             ctx.lineWidth = 2;
+             ctx.beginPath();
+             ctx.arc(this.position.x, this.position.y, s, 0, Math.PI * 2);
+             ctx.stroke();
         } else {
             // Circle
             ctx.arc(this.position.x, this.position.y, s, 0, Math.PI * 2);
@@ -121,6 +123,5 @@ export class Particle implements IParticle {
 
     // Reset context
     ctx.globalAlpha = 1.0;
-    ctx.shadowBlur = 0;
   }
 }

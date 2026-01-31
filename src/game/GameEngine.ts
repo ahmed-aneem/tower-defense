@@ -22,6 +22,7 @@ export interface GameState {
   choosingMod: boolean;
   modOptions: Mod[];
   speed: number;
+  autoStart: boolean;
 }
 
 export interface LightningBolt {
@@ -57,10 +58,12 @@ export class GameEngine {
     activeMods: [],
     choosingMod: false,
     modOptions: [],
-    speed: 1
+    speed: 1,
+    autoStart: false
   };
 
   path: Vector2[];
+  private autoStartTimer: number = 0;
   modOptions: Mod[] = [];
   isRunning: boolean = true;
   placementMode: TowerType | null = null;
@@ -162,6 +165,11 @@ export class GameEngine {
   togglePause() {
     this.state.isPaused = !this.state.isPaused;
     this.notifyState(true);
+  }
+
+  toggleAutoStart() {
+      this.state.autoStart = !this.state.autoStart;
+      this.notifyState(true);
   }
 
   setSpeed(multiplier: number) {
@@ -398,6 +406,17 @@ export class GameEngine {
   }
 
   private update() {
+    // Auto Start Logic
+    if (!this.state.waveActive && this.state.autoStart && this.state.gameStarted && !this.state.isGameOver && !this.state.choosingMod && !this.state.isPaused) {
+         this.autoStartTimer++;
+         if (this.autoStartTimer > 60) {
+             this.startWave();
+             this.autoStartTimer = 0;
+         }
+    } else {
+        this.autoStartTimer = 0;
+    }
+
     // Spawning
     if (this.state.waveActive) {
       if (this.enemiesToSpawn.length > 0) {
@@ -581,6 +600,9 @@ export class GameEngine {
                 p.active = false;
             } else {
                 e.takeDamage(finalDamage);
+                // Pop Effect
+                this.particles.push(this.particlePool.get(e.position, e.color, 1, e.radius/10, undefined, 'POP'));
+
                 if (p.statusEffect) e.applyEffect(p.statusEffect);
 
                 if (finalDamage <= 0) {
@@ -912,6 +934,18 @@ export class GameEngine {
 
     // Draw Placement Ghost
     if (this.placementMode) {
+        // Draw ranges of existing towers to help placement
+        this.ctx.save();
+        this.towers.forEach(t => {
+             this.ctx.beginPath();
+             this.ctx.arc(t.position.x, t.position.y, t.range, 0, Math.PI * 2);
+             this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+             this.ctx.lineWidth = 1;
+             this.ctx.setLineDash([5, 5]);
+             this.ctx.stroke();
+        });
+        this.ctx.restore();
+
         const tConf = TOWERS[this.placementMode];
         this.ctx.save();
         this.ctx.translate(this.mousePosition.x, this.mousePosition.y);

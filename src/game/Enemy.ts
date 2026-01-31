@@ -251,6 +251,30 @@ export class Enemy implements IEnemy {
         ctx.stroke();
     }
 
+    // Draw Camo Icon
+    if (this.isCamo) {
+         ctx.save();
+         const iconY = -this.radius - 8;
+         // Draw an "Eye"
+         ctx.fillStyle = '#94a3b8'; // Slate 400
+         ctx.beginPath();
+         ctx.ellipse(0, iconY, 5, 3, 0, 0, Math.PI * 2);
+         ctx.fill();
+         // Pupil
+         ctx.fillStyle = '#0f172a';
+         ctx.beginPath();
+         ctx.arc(0, iconY, 1.5, 0, Math.PI * 2);
+         ctx.fill();
+         // Cross out
+         ctx.strokeStyle = '#ef4444';
+         ctx.lineWidth = 1.5;
+         ctx.beginPath();
+         ctx.moveTo(-4, iconY - 3);
+         ctx.lineTo(4, iconY + 3);
+         ctx.stroke();
+         ctx.restore();
+    }
+
     // Draw Health Bar
     const barWidth = this.radius * 2;
     const yOffset = this.radius + 8;
