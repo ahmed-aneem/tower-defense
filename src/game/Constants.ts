@@ -1,6 +1,9 @@
-export const CELL_SIZE = 40;
-export const GAME_WIDTH = 1200; // Increased size for "mapa maior"
-export const GAME_HEIGHT = 800;
+export const DESKTOP_WIDTH = 1200;
+export const DESKTOP_HEIGHT = 800;
+export const MOBILE_WIDTH = 800;
+export const MOBILE_HEIGHT = 533; // ~3:2 Landscape
+export const MOBILE_PORTRAIT_WIDTH = 450;
+export const MOBILE_PORTRAIT_HEIGHT = 800; // ~9:16 Portrait
 
 import { StatusEffectType } from './StatusEffects';
 

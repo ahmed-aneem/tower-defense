@@ -13,20 +13,20 @@ export const MAPS: MapConfig[] = [
     name: 'The Serpent',
     description: 'A long winding path with many corners.',
     waypoints: [
-        new Vector2(0, 100),
-        new Vector2(200, 100),
-        new Vector2(200, 300),
-        new Vector2(100, 300),
-        new Vector2(100, 500),
-        new Vector2(400, 500),
-        new Vector2(400, 200),
-        new Vector2(600, 200),
-        new Vector2(600, 400),
-        new Vector2(800, 400),
-        new Vector2(800, 150),
-        new Vector2(1000, 150),
-        new Vector2(1000, 600),
-        new Vector2(1200, 600)
+        new Vector2(0, 0.125),
+        new Vector2(0.166, 0.125),
+        new Vector2(0.166, 0.375),
+        new Vector2(0.083, 0.375),
+        new Vector2(0.083, 0.625),
+        new Vector2(0.333, 0.625),
+        new Vector2(0.333, 0.25),
+        new Vector2(0.5, 0.25),
+        new Vector2(0.5, 0.5),
+        new Vector2(0.666, 0.5),
+        new Vector2(0.666, 0.1875),
+        new Vector2(0.833, 0.1875),
+        new Vector2(0.833, 0.75),
+        new Vector2(1, 0.75)
     ]
   },
   {
@@ -34,14 +34,14 @@ export const MAPS: MapConfig[] = [
     name: 'The Fortress',
     description: 'A defensive perimeter around the core.',
     waypoints: [
-        new Vector2(0, 400),
-        new Vector2(200, 400),
-        new Vector2(200, 100),
-        new Vector2(1000, 100),
-        new Vector2(1000, 700),
-        new Vector2(200, 700),
-        new Vector2(200, 500),
-        new Vector2(1200, 500)
+        new Vector2(0, 0.5),
+        new Vector2(0.166, 0.5),
+        new Vector2(0.166, 0.125),
+        new Vector2(0.833, 0.125),
+        new Vector2(0.833, 0.875),
+        new Vector2(0.166, 0.875),
+        new Vector2(0.166, 0.625),
+        new Vector2(1, 0.625)
     ]
   },
   {
@@ -49,14 +49,14 @@ export const MAPS: MapConfig[] = [
     name: 'The Crossing',
     description: 'A treacherous path that cuts through the center.',
     waypoints: [
-        new Vector2(0, 100),
-        new Vector2(300, 100),
-        new Vector2(300, 700),
-        new Vector2(600, 700),
-        new Vector2(600, 100),
-        new Vector2(900, 100),
-        new Vector2(900, 700),
-        new Vector2(1200, 700)
+        new Vector2(0, 0.125),
+        new Vector2(0.25, 0.125),
+        new Vector2(0.25, 0.875),
+        new Vector2(0.5, 0.875),
+        new Vector2(0.5, 0.125),
+        new Vector2(0.75, 0.125),
+        new Vector2(0.75, 0.875),
+        new Vector2(1, 0.875)
     ]
   }
 ];
