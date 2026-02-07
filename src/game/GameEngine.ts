@@ -6,9 +6,11 @@ import { ObjectPool } from './ObjectPool';
 import { QuadTree } from './QuadTree';
 import { Vector2 } from './Vector';
 import { TOWERS, type TowerType, DamageType, DefenseType, ENEMIES } from './Constants';
-import { type EnemyType } from '../types';
 import { soundManager } from './SoundManager';
 import { type Mod, MODS } from './Mods';
+import { WaveManager } from './systems/WaveManager';
+import { InputManager } from './systems/InputManager';
+
 
 export interface GameState {
     money: number;
@@ -65,6 +67,9 @@ export class GameEngine {
     };
 
     path: Vector2[];
+    public waveManager: WaveManager;
+    public inputManager: InputManager;
+
     private autoStartTimer: number = 0;
     modOptions: Mod[] = [];
     isRunning: boolean = true;
@@ -77,8 +82,6 @@ export class GameEngine {
     private lastNotifyTime: number = 0;
     private accumulator: number = 0;
     private readonly TIMESTEP: number = 1000 / 60; // 60 FPS Logic
-    private spawnTimer: number = 0;
-    private enemiesToSpawn: EnemyType[] = [];
     private onStateChange: (state: GameState) => void;
 
     public speedMultiplier: number = 1;
@@ -93,6 +96,9 @@ export class GameEngine {
         this.height = height;
         this.onStateChange = onStateChange;
         this.path = mapPath.map(p => new Vector2(p.x * width, p.y * height));
+        this.waveManager = new WaveManager();
+        this.inputManager = new InputManager();
+
 
         // Init Pools
         this.projectilePool = new ObjectPool<Projectile>(
@@ -182,16 +188,15 @@ export class GameEngine {
         this.notifyState();
     }
 
-    startWave() {
-        // Check for Mod Selection every 5 waves (Wave 6, 11, 16...) meaning we just finished 5, 10, 15
+        startWave() {
         if (this.state.wave > 1 && (this.state.wave - 1) % 5 === 0 && !this.state.choosingMod && this.lastModWave !== this.state.wave) {
             this.triggerModSelection();
             return;
         }
 
+        this.waveManager.startNextWave();
+        this.state.wave = this.waveManager.wave;
         this.state.waveActive = true;
-        this.enemiesToSpawn = this.generateWave(this.state.wave);
-        this.spawnTimer = 0;
         this.notifyState();
     }
 
@@ -225,29 +230,7 @@ export class GameEngine {
         this.startWave();
     }
 
-    generateWave(waveNum: number): EnemyType[] {
-        const enemies: EnemyType[] = [];
-        const count = 5 + Math.floor(waveNum * 1.5);
 
-        // Apply complexity
-        for (let i = 0; i < count; i++) {
-            if (waveNum % 10 === 0 && i === 0) {
-                enemies.push('BOSS');
-            } else if (waveNum % 5 === 0 && i < waveNum / 3) {
-                enemies.push('TANK');
-                enemies.push('ARMORED');
-            } else if (waveNum > 3 && i % 4 === 0) {
-                enemies.push('SWARM');
-                enemies.push('SWARM');
-                enemies.push('SWARM');
-            } else if (waveNum > 2 && i % 3 === 0) {
-                enemies.push('FAST');
-            } else {
-                enemies.push('NORMAL');
-            }
-        }
-        return enemies;
-    }
 
     hasMod(id: string): boolean {
         return this.state.activeMods.some(m => m.id === id);
@@ -409,7 +392,32 @@ export class GameEngine {
         requestAnimationFrame((t) => this.loop(t));
     }
 
-    private update() {
+        private update() {
+        // Wave Logic
+        const newEnemyType = this.waveManager.update(16); // Assuming fixed step or passing dt
+        if (newEnemyType) {
+             // Spawn logic needs path.
+             // But WaveManager returns EnemyType. We need to create Enemy here?
+             // Or WaveManager returns Enemy object?
+             // My previous WaveManager returned EnemyType | null.
+             // So I need to spawn it here.
+             const enemy = new Enemy(newEnemyType, this.path[0]);
+             enemy.setPath(this.path);
+             this.enemies.push(enemy);
+        }
+
+        // Check Wave Completion
+        if (this.waveManager.checkWaveCompletion(this.enemies.length)) {
+            this.state.waveActive = false;
+            this.applyEndOfWaveMods();
+            if (this.state.autoStart) {
+                 this.startWave();
+            }
+        }
+
+        // Sync State
+        this.state.wave = this.waveManager.wave;
+
         // Auto Start Logic
         if (!this.state.waveActive && this.state.autoStart && this.state.gameStarted && !this.state.isGameOver && !this.state.choosingMod && !this.state.isPaused) {
             this.autoStartTimer++;
@@ -421,29 +429,7 @@ export class GameEngine {
             this.autoStartTimer = 0;
         }
 
-        // Spawning
-        if (this.state.waveActive) {
-            if (this.enemiesToSpawn.length > 0) {
-                this.spawnTimer++;
-                if (this.spawnTimer > 60) {
-                    const type = this.enemiesToSpawn.shift()!;
-                    // Pass path to enemy
-                    const enemy = new Enemy(type);
-                    enemy.setPath(this.path); // Enemy needs to know path!
-                    this.enemies.push(enemy);
-                    this.spawnTimer = 0;
-                }
-            } else if (this.enemies.length === 0) {
-                // Wave complete
-                this.state.waveActive = false;
 
-                // Apply End of Wave Mods
-                this.applyEndOfWaveMods();
-
-                this.state.wave++;
-                this.notifyState();
-            }
-        }
 
         // Update Enemies
         this.enemies.forEach(e => e.update());
@@ -498,7 +484,7 @@ export class GameEngine {
                             t.position.y + Math.sin(angle) * t.range
                         );
 
-                        let damage = t.damage;
+                        const damage = t.damage;
                         const effect = t.statusEffect ? { ...t.statusEffect, sourceId: t.id } : undefined;
 
                         this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, t.color, t.damageType, t.pierce, false, 0, effect, false));
@@ -937,45 +923,7 @@ export class GameEngine {
         this.particles.forEach(p => p.draw(this.ctx));
 
         // Draw Placement Ghost
-        if (this.placementMode) {
-            // Draw ranges of existing towers to help placement
-            this.ctx.save();
-            this.towers.forEach(t => {
-                this.ctx.beginPath();
-                this.ctx.arc(t.position.x, t.position.y, t.range, 0, Math.PI * 2);
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-                this.ctx.lineWidth = 1;
-                this.ctx.setLineDash([5, 5]);
-                this.ctx.stroke();
-            });
-            this.ctx.restore();
-
-            const tConf = TOWERS[this.placementMode];
-            this.ctx.save();
-            this.ctx.translate(this.mousePosition.x, this.mousePosition.y);
-
-            // Range
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, tConf.range, 0, Math.PI * 2);
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            this.ctx.fill();
-            this.ctx.strokeStyle = '#fff';
-            this.ctx.lineWidth = 1;
-            this.ctx.setLineDash([5, 5]);
-            this.ctx.stroke();
-
-            // Body
-            this.ctx.fillStyle = tConf.color;
-            this.ctx.beginPath();
-            if (this.placementMode === 'SPLASH') {
-                this.ctx.rect(-10, -10, 20, 20);
-            } else {
-                this.ctx.arc(0, 0, 10, 0, Math.PI * 2);
-            }
-            this.ctx.fill();
-
-            this.ctx.restore();
-        }
+        this.inputManager.drawPreview(this.ctx);
 
         this.ctx.restore();
     }
@@ -1008,10 +956,20 @@ export class GameEngine {
         }
     }
 
-    handleClick(x: number, y: number): Tower | null {
-        const clickPos = new Vector2(x, y);
-        const existingTower = this.getTowerAt(clickPos);
-        if (existingTower) return existingTower;
+        handleClick(x: number, y: number): Tower | null {
+        this.inputManager.updateMouse(x, y);
+        const action = this.inputManager.handleClick(this.towers, this.state.money);
+
+        if (action) {
+            if (action.action === 'PLACE') {
+                if (this.placeTower(action.pos, action.type)) {
+                    this.inputManager.setPlacementMode(null);
+                    return null;
+                }
+            } else if (action.action === 'SELECT') {
+                return action.tower;
+            }
+        }
         return null;
     }
 
