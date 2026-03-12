@@ -1,49 +1,48 @@
-# Neon Defense
+# 🗼 Neon Defense (Tower Defense)
 
-A strategic Tower Defense game built with React, TypeScript, and HTML5 Canvas.
+[![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-7.x-646CFF?logo=vite)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?logo=tailwindcss)](https://tailwindcss.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 
-## Features
+> A modern, high-performance Tower Defense game built with React 19, HTML5 Canvas, and a stunning "Flat Neon" aesthetic.
 
-- **Strategic Gameplay**: Place towers to defend your core from waves of enemies.
-- **9 Tower Types**: Basic, Sniper, Minigun, Frost, Cannon, Laser, Tack, Farm, and **Plasma**.
-- **Multiple Maps**: Choose from 3 distinct sectors (Serpent, Fortress, Crossing).
-- **Roguelite Mods**: Every 5 waves, choose a system upgrade to boost your defenses or economy.
-- **Advanced Mechanics**:
-  - **Damage Types**: Physical, Explosive, Energy.
-  - **Enemy Properties**: Watch out for **Camo** (Invisible) and **Regen** (Healing) enemies.
-  - **Status Effects**: Slow enemies with Cold, Burn them with Lasers, or Stun them with Explosions.
-  - **Defense System**: Armored and Shielded enemies require specific counters.
-  - **Targeting Priorities**: Configure each tower to target First, Last, Strongest, Weakest, or Closest.
-- **Deep Tower Upgrades**: Unlock powerful Level 3 abilities like **Railgun**, **Double Tap**, **Cluster Bombs**, and **Plasma Overdrive**.
-- **Special Abilities**: Call down an **Orbital Strike** to decimate enemies.
-- **Diverse Enemies**: Face off against fast swarms, armored tanks, and massive bosses.
-- **Retro-Modern Visuals**: Clean, flat neon aesthetic with particle effects.
-- **Performance Optimized**: Object pooling, offscreen grid buffering, and state throttling ensure smooth gameplay on mobile and desktop.
-- **Game Speed Control**: Toggle between 1x, 2x, and 4x game speed.
-- **Synthesized Audio**: No external assets; all sound is generated procedurally.
+## ✨ Features
 
-## Tech Stack
+- **Neon Engine**: Custom high-frequency Canvas rendering engine for 60FPS performance.
+- **Roguelite Mods**: Dynamic upgrade system offered every 5 waves for deep strategic variety.
+- **Deep Tower Upgrades**: 9 tower types with branching Level 3 upgrades (e.g., Railgun, Plasma Overdrive).
+- **Complex Mechanics**: Damage types (Physical, Energy, Cold), Resistances, Pierce, and Status Effects (SLOW, BURN, STUN).
+- **Procedural Audio**: Dynamic sound effects generated via Web Audio API.
 
-- React 19
-- TypeScript
-- Vite
-- Tailwind CSS
-- HTML5 Canvas API
-- Web Audio API
+## 🛠️ Tech Stack
 
-## Getting Started
+- **Game Logic**: HTML5 Canvas + TypeScript
+- **Framework**: React 19 (for HUD/UI)
+- **Styling**: TailwindCSS 4.x
+- **Build**: Vite 7.x
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+## 🚀 Play Now
 
-2. Run development server:
-   ```bash
-   npm run dev
-   ```
+```bash
+# Install dependencies
+pnpm install
 
-3. Build for production:
-   ```bash
-   npm run build
-   ```
+# Start development server
+pnpm run dev
+
+# Build for production
+pnpm run build
+```
+
+## 🛡️ Antigravity Protocol
+
+This project follows the **Antigravity** code standards:
+- **Object Pooling**: Mandatory for projectiles and particles to ensure performance.
+- **180-Line Limit**: Large files are split into specialized modules (e.g., `StatusEffects.ts`, `Maps.ts`).
+- **Strict Typing**: Full typing for all game entities and engine states.
+- **Neon Aesthetic**: Maintain flat visuals and vector-based rendering.
+
+---
+
+*"Strategy is just another word for survival."*
