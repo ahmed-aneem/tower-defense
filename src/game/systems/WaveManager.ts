@@ -1,0 +1,67 @@
+import { type EnemyType } from '../../types';
+
+export class WaveManager {
+    public wave: number = 0;
+    public waveActive: boolean = false;
+    public enemiesToSpawn: EnemyType[] = [];
+    public spawnTimer: number = 0;
+
+    // Config
+    private spawnIntervalBase: number = 1000;
+
+    constructor() {}
+
+    startNextWave(): void {
+        this.wave++;
+        this.waveActive = true;
+        this.enemiesToSpawn = this.generateWave(this.wave);
+        this.spawnTimer = 0;
+    }
+
+    update(dt: number): EnemyType | null {
+        if (!this.waveActive) return null;
+
+        if (this.enemiesToSpawn.length > 0) {
+            this.spawnTimer += dt;
+            const currentInterval = Math.max(200, this.spawnIntervalBase - (this.wave * 10));
+
+            if (this.spawnTimer >= currentInterval) {
+                this.spawnTimer = 0;
+                return this.enemiesToSpawn.shift() || null;
+            }
+        }
+        return null;
+    }
+
+    checkWaveCompletion(activeEnemyCount: number): boolean {
+        // If no enemies left to spawn AND no active enemies alive
+        return this.waveActive && this.enemiesToSpawn.length === 0 && activeEnemyCount === 0;
+    }
+
+    private generateWave(waveNum: number): EnemyType[] {
+        const enemies: EnemyType[] = [];
+        const count = 5 + Math.floor(waveNum * 1.5);
+
+        for (let i = 0; i < count; i++) {
+            if (waveNum % 10 === 0 && i === 0) {
+                enemies.push('BOSS');
+            } else if (waveNum % 5 === 0 && i < waveNum / 3) {
+                enemies.push('TANK');
+            } else if (waveNum > 3 && i % 4 === 0) {
+                enemies.push('FAST');
+            } else if (waveNum > 2 && i % 3 === 0) {
+                enemies.push('ARMORED');
+            } else {
+                enemies.push('NORMAL');
+            }
+        }
+        return enemies;
+    }
+
+    reset() {
+        this.wave = 1;
+        this.waveActive = false;
+        this.enemiesToSpawn = [];
+        this.spawnTimer = 0;
+    }
+}
