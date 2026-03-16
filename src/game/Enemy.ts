@@ -26,6 +26,7 @@ export class Enemy implements IEnemy {
   scale: number = 0;
   targetScale: number = 1;
   hitFlashTimer: number = 0;
+  rotation: number = 0;
 
   waypointIndex: number = 0;
   private path: Vector2[] = [];
@@ -164,6 +165,9 @@ export class Enemy implements IEnemy {
     const direction = target.sub(this.position);
     const dist = direction.length();
 
+    // Rotation
+    this.rotation = Math.atan2(direction.y, direction.x);
+
     // Move towards target
     if (dist < currentSpeed) {
       this.position = target.clone();
@@ -194,12 +198,16 @@ export class Enemy implements IEnemy {
         ctx.setLineDash([2, 2]); // Dotted line for camo
     }
 
+    // Rotate the visual orientation based on direction
+    ctx.save();
+    ctx.rotate(this.rotation);
+
     ctx.beginPath();
     if (this.type === 'TANK' || this.type === 'ARMORED') {
         // Square for Tank/Armored
         ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
     } else if (this.type === 'FAST' || this.type === 'SWARM') {
-        // Triangle for Fast/Swarm
+        // Triangle for Fast/Swarm pointing right (which aligns with rotation 0)
         ctx.moveTo(this.radius, 0);
         ctx.lineTo(-this.radius, -this.radius);
         ctx.lineTo(-this.radius, this.radius);
@@ -250,6 +258,8 @@ export class Enemy implements IEnemy {
         ctx.lineTo(-this.radius/2, this.radius/2);
         ctx.stroke();
     }
+
+    ctx.restore(); // Restore from rotation so icons don't rotate
 
     // Draw Camo Icon
     if (this.isCamo) {

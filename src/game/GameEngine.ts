@@ -103,7 +103,7 @@ export class GameEngine {
         // Init Pools
         this.projectilePool = new ObjectPool<Projectile>(
             () => new Projectile(new Vector2(0, 0), new Vector2(0, 0), 0, ''),
-            (p, start, target, dmg, col, type, pierce, splash, rad, effect, isCluster) => p.reset(start, target, dmg, col, type, pierce, splash, rad, effect, isCluster)
+            (p, start, target, dmg, col, type, pierce, splash, rad, effect, isCluster, maxRange) => p.reset(start, target, dmg, col, type, pierce, splash, rad, effect, isCluster, maxRange)
         );
 
         this.particlePool = new ObjectPool<Particle>(
@@ -282,13 +282,11 @@ export class GameEngine {
     }
 
     sellTower(tower: Tower) {
-        let cost: number = TOWERS[tower.type].cost;
-        // Discount mod means we spent less, so we should probably refund based on spent?
-        // But simplified: refund 50% of base cost.
-        // If we want to be nice, 50% of current cost.
-        if (this.hasMod('DISCOUNT')) cost = Math.floor(cost * 0.9);
+        // Refund 70% of total amount spent on this tower and its upgrades
+        let refund = Math.floor(tower.totalSpent * 0.7);
 
-        this.state.money += Math.floor(cost * 0.5);
+        this.state.money += refund;
+        this.createFloatingText(tower.position, `+$${refund}`, "#F87171");
         this.createExplosion(tower.position, '#F87171', 8, 1.5);
         this.towers = this.towers.filter(t => t.id !== tower.id);
         this.notifyState();
@@ -303,6 +301,7 @@ export class GameEngine {
         if (this.state.money >= cost && tower.level < 3) {
             this.state.money -= cost;
             tower.upgrade();
+            tower.totalSpent += cost;
 
             // Apply mods again?
             // upgrade() sets stats based on base. We need to re-apply multipliers.
@@ -403,6 +402,13 @@ export class GameEngine {
              // So I need to spawn it here.
              const enemy = new Enemy(newEnemyType, this.path[0]);
              enemy.setPath(this.path);
+
+             // Apply Freeplay HP multiplier
+             if (this.waveManager.hpMultiplier > 1) {
+                 enemy.hp = Math.floor(enemy.hp * this.waveManager.hpMultiplier);
+                 enemy.maxHp = enemy.hp;
+             }
+
              this.enemies.push(enemy);
         }
 
@@ -487,7 +493,7 @@ export class GameEngine {
                         const damage = t.damage;
                         const effect = t.statusEffect ? { ...t.statusEffect, sourceId: t.id } : undefined;
 
-                        this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, t.color, t.damageType, t.pierce, false, 0, effect, false));
+                        this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, t.color, t.damageType, t.pierce, false, 0, effect, false, t.range + 50));
                     }
                     soundManager.playShoot(t.type);
                 } else {
@@ -504,7 +510,7 @@ export class GameEngine {
                     }
 
                     const effect = t.statusEffect ? { ...t.statusEffect, sourceId: t.id } : undefined;
-                    this.projectiles.push(this.projectilePool.get(t.position, target.position, damage, color, t.damageType, t.pierce, isSplash, splashRadius, effect, isCluster));
+                    this.projectiles.push(this.projectilePool.get(t.position, target.position, damage, color, t.damageType, t.pierce, isSplash, splashRadius, effect, isCluster, t.range + 50));
                     soundManager.playShoot(t.type);
                     this.createExplosion(t.position, t.color, 3, 0.5);
                 }
@@ -582,7 +588,8 @@ export class GameEngine {
                                     true, // isSplash
                                     30, // smaller radius
                                     undefined,
-                                    false // not cluster again
+                                    false, // not cluster again
+                                    200 // max range for cluster
                                 ));
                             }
                         }
@@ -722,6 +729,9 @@ export class GameEngine {
         const initialDmg = this.calculateDamage(tower.damage, tower.damageType, initialTarget.defenseType);
         initialTarget.takeDamage(initialDmg);
         if (tower.statusEffect) initialTarget.applyEffect(tower.statusEffect);
+        if (initialDmg <= 0) {
+             this.createFloatingText(initialTarget.position, "IMMUNE", "#fff");
+        }
 
         // Chain
         for (let i = 0; i < tower.pierce; i++) {
@@ -782,7 +792,11 @@ export class GameEngine {
                 const dmg = this.calculateDamage(Math.floor(tower.damage * 0.8), tower.damageType, current.defenseType);
                 current.takeDamage(dmg);
                 if (tower.statusEffect) current.applyEffect(tower.statusEffect);
-                this.createExplosion(current.position, tower.color, 2, 0.5);
+                if (dmg <= 0) {
+                    this.createFloatingText(current.position, "IMMUNE", "#fff");
+                } else {
+                    this.createExplosion(current.position, tower.color, 2, 0.5);
+                }
             } else {
                 break;
             }
@@ -832,7 +846,7 @@ export class GameEngine {
 
     private calculateDamage(amount: number, type: DamageType, defense: DefenseType): number {
         if (defense === DefenseType.HEAVY) {
-            if (type === DamageType.PHYSICAL) return Math.floor(amount * 0.5);
+            if (type === DamageType.PHYSICAL) return 0; // Strict immunity (like BTD6 Lead)
             if (type === DamageType.EXPLOSIVE) return Math.floor(amount * 1.5);
         } else if (defense === DefenseType.SHIELDED) {
             if (type === DamageType.PHYSICAL) return amount;

@@ -260,7 +260,7 @@ export const HUD: React.FC<HUDProps> = ({
             >
               <span>SELL</span>
               <span className="bg-rose-950/50 px-2 py-0.5 rounded text-xs font-mono group-hover:bg-rose-900/50">
-                +${Math.floor(TOWERS[selectedTower.type].cost * 0.5)}
+                +${Math.floor(selectedTower.totalSpent * 0.7)}
               </span>
             </button>
 

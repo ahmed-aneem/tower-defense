@@ -22,6 +22,7 @@ export class Tower implements ITower {
   pierce: number;
   statusEffect?: StatusEffect;
   camoDetection: boolean;
+  totalSpent: number;
 
   // Visual recoil
   recoil: number = 0;
@@ -42,6 +43,7 @@ export class Tower implements ITower {
     this.statusEffect = config.statusEffect;
     // @ts-ignore
     this.camoDetection = config.camoDetection;
+    this.totalSpent = config.cost;
   }
 
   get upgradeCost(): number {
@@ -54,6 +56,7 @@ export class Tower implements ITower {
   upgrade() {
     if (this.level >= 3) return;
 
+    this.totalSpent += this.upgradeCost;
     this.level++;
 
     if (this.level === 2) {

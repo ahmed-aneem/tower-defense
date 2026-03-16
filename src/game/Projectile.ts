@@ -19,6 +19,8 @@ export class Projectile implements IProjectile {
   hitList: Set<string> = new Set();
   statusEffect?: StatusEffect;
   isCluster: boolean = false;
+  origin: Vector2;
+  maxRange: number;
 
   constructor(
       startPos: Vector2,
@@ -30,10 +32,13 @@ export class Projectile implements IProjectile {
       isSplash: boolean = false,
       splashRadius: number = 0,
       statusEffect?: StatusEffect,
-      isCluster: boolean = false
+      isCluster: boolean = false,
+      maxRange: number = 2000
   ) {
     this.id = Math.random().toString(36).substr(2, 9);
     this.position = startPos.clone();
+    this.origin = startPos.clone();
+    this.maxRange = maxRange;
     this.velocity = new Vector2(0, 0); // Initial dummy
     this.damage = damage;
     this.color = color;
@@ -62,10 +67,13 @@ export class Projectile implements IProjectile {
       isSplash: boolean = false,
       splashRadius: number = 0,
       statusEffect?: StatusEffect,
-      isCluster: boolean = false
+      isCluster: boolean = false,
+      maxRange: number = 2000
   ) {
     this.active = true;
     this.position = startPos.clone();
+    this.origin = startPos.clone();
+    this.maxRange = maxRange;
     this.damage = damage;
     this.color = color;
     this.damageType = damageType;
@@ -87,6 +95,10 @@ export class Projectile implements IProjectile {
     // Basic bounds check to clean up stray projectiles
     if (this.position.x < -50 || this.position.x > 2000 || this.position.y < -50 || this.position.y > 2000) {
       this.active = false;
+    }
+
+    if (this.position.distanceTo(this.origin) > this.maxRange) {
+        this.active = false;
     }
   }
 
