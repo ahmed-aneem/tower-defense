@@ -11,6 +11,8 @@ export class WaveManager {
 
     constructor() {}
 
+    public hpMultiplier: number = 1;
+
     startNextWave(): void {
         this.wave++;
         this.waveActive = true;
@@ -40,10 +42,18 @@ export class WaveManager {
 
     private generateWave(waveNum: number): EnemyType[] {
         const enemies: EnemyType[] = [];
-        const count = 5 + Math.floor(waveNum * 1.5);
+
+        // Freeplay scaling
+        if (waveNum > 50) {
+            this.hpMultiplier = 1 + ((waveNum - 50) * 0.2); // +20% HP per wave after 50
+        }
+
+        // Endless scaling count
+        let count = 5 + Math.floor(waveNum * 1.5);
+        if (waveNum > 50) count = Math.min(150, Math.floor(count * 1.5)); // Cap spawn count
 
         for (let i = 0; i < count; i++) {
-            if (waveNum % 10 === 0 && i === 0) {
+            if (waveNum % 10 === 0 && i < Math.max(1, waveNum / 20)) {
                 enemies.push('BOSS');
             } else if (waveNum % 5 === 0 && i < waveNum / 3) {
                 enemies.push('TANK');
@@ -52,7 +62,11 @@ export class WaveManager {
             } else if (waveNum > 2 && i % 3 === 0) {
                 enemies.push('ARMORED');
             } else {
-                enemies.push('NORMAL');
+                if (waveNum > 50 && i % 5 === 0) {
+                    enemies.push('BOSS'); // Add random bosses in freeplay
+                } else {
+                    enemies.push('NORMAL');
+                }
             }
         }
         return enemies;
