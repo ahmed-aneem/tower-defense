@@ -300,15 +300,8 @@ export class GameEngine {
 
         if (this.state.money >= cost && tower.level < 3) {
             this.state.money -= cost;
-            // Overriding the default upgrade logic to account for discount
-            // Since we handle the "cost" locally before calling upgrade
-            // we should manually add the actual paid amount to totalSpent
-            // wait, totalSpent is added inside upgrade(). We need to patch that.
-            // Let's just adjust it here for now.
-            const oldSpent = tower.totalSpent;
             tower.upgrade();
-            // fix the totalSpent added in tower.upgrade() by overwriting
-            tower.totalSpent = oldSpent + cost;
+            tower.totalSpent += cost;
 
             // Apply mods again?
             // upgrade() sets stats based on base. We need to re-apply multipliers.
