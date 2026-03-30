@@ -44,6 +44,13 @@ export class Particle implements IParticle {
         this.size = (2 + Math.random() * 3) * sizeMultiplier;
         this.decay = 0.95; // Friction
 
+        if (this.shape === 'POP') {
+            this.maxLife = 15;
+            this.life = this.maxLife;
+            this.size = 5 * sizeMultiplier; // Start small
+            this.decay = 1.0; // No friction for POP expanding ring
+        }
+
         // Random direction with improved physics feel
         const angle = Math.random() * Math.PI * 2;
         const speed = (1 + Math.random() * 3) * speedMultiplier;
@@ -55,6 +62,11 @@ export class Particle implements IParticle {
     this.velocity.y += this.gravity;
     this.position = this.position.add(this.velocity);
     this.velocity = this.velocity.scale(this.decay); // Apply friction
+
+    if (this.shape === 'POP') {
+        this.size += 1.5; // Expand fast
+    }
+
     this.life--;
   }
 
@@ -110,9 +122,9 @@ export class Particle implements IParticle {
              ctx.restore();
         } else if (this.shape === 'POP') {
              ctx.strokeStyle = this.color;
-             ctx.lineWidth = 2;
+             ctx.lineWidth = 3 * alpha;
              ctx.beginPath();
-             ctx.arc(this.position.x, this.position.y, s, 0, Math.PI * 2);
+             ctx.arc(this.position.x, this.position.y, this.size, 0, Math.PI * 2);
              ctx.stroke();
         } else {
             // Circle

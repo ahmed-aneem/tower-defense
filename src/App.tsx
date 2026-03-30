@@ -26,6 +26,7 @@ function App() {
   const [selectedTowerType, setSelectedTowerType] = useState<TowerType | null>(null);
   const [selectedTower, setSelectedTower] = useState<Tower | null>(null);
   const [selectedMap, setSelectedMap] = useState<MapConfig>(MAPS[0]);
+  const [isPointerDown, setIsPointerDown] = useState(false);
   const [scale, setScale] = useState(1);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
   const [isPortrait, setIsPortrait] = useState(false);
@@ -126,9 +127,27 @@ function App() {
     };
   };
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    setIsPointerDown(true);
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    engineRef.current?.updateMouse(new Vector2(x, y));
+  };
+
+  const handlePointerUp = () => {
+    setIsPointerDown(false);
+    if (!engineRef.current) return;
+
+    // Only attempt placement on pointer up if we are dragging a tower
+    if (selectedTowerType && isPointerDown) {
+      const success = engineRef.current.confirmPlacement();
+      if (success) {
+        setSelectedTowerType(null);
+      }
+    }
+  };
+
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!engineRef.current) return;
-    // Prevent default to avoid scrolling on touch
     e.preventDefault();
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
     engineRef.current.updateMouse(new Vector2(x, y));
@@ -196,7 +215,11 @@ function App() {
           ref={canvasRef}
           className="cursor-crosshair block touch-none"
           onClick={handleCanvasClick}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
           onPointerMove={handlePointerMove}
+          onPointerCancel={handlePointerUp}
+          onPointerLeave={handlePointerUp}
         />
 
         <HUD
