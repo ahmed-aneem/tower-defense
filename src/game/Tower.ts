@@ -39,9 +39,9 @@ export class Tower implements ITower {
     this.color = config.color;
     this.damageType = config.damageType;
     this.pierce = config.pierce;
-    // @ts-ignore - Config has it, but Typescript inference might lag if not explicit in Constants types yet
+    // @ts-expect-error - Config has it, but Typescript inference might lag if not explicit in Constants types yet
     this.statusEffect = config.statusEffect;
-    // @ts-ignore
+    // @ts-expect-error config object typing
     this.camoDetection = config.camoDetection;
     this.totalSpent = config.cost;
   }

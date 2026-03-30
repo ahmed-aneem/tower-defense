@@ -88,6 +88,8 @@ export class GameEngine {
 
     // Screen shake
     private shakeIntensity: number = 0;
+    private shakeX: number = 0;
+    private shakeY: number = 0;
 
     constructor(canvas: HTMLCanvasElement, mapPath: Vector2[], width: number, height: number, onStateChange: (state: GameState) => void) {
         this.canvas = canvas;
@@ -283,7 +285,7 @@ export class GameEngine {
 
     sellTower(tower: Tower) {
         // Refund 70% of total amount spent on this tower and its upgrades
-        let refund = Math.floor(tower.totalSpent * 0.7);
+        const refund = Math.floor(tower.totalSpent * 0.7);
 
         this.state.money += refund;
         this.createFloatingText(tower.position, `+$${refund}`, "#F87171");
@@ -686,7 +688,13 @@ export class GameEngine {
         // Decay shake
         if (this.shakeIntensity > 0) {
             this.shakeIntensity *= 0.9;
-            if (this.shakeIntensity < 0.5) this.shakeIntensity = 0;
+            this.shakeX = (Math.random() - 0.5) * this.shakeIntensity;
+            this.shakeY = (Math.random() - 0.5) * this.shakeIntensity;
+            if (this.shakeIntensity < 0.5) {
+                 this.shakeIntensity = 0;
+                 this.shakeX = 0;
+                 this.shakeY = 0;
+            }
         }
     }
 
@@ -860,9 +868,7 @@ export class GameEngine {
         this.ctx.save();
 
         if (this.shakeIntensity > 0) {
-            const dx = (Math.random() - 0.5) * this.shakeIntensity;
-            const dy = (Math.random() - 0.5) * this.shakeIntensity;
-            this.ctx.translate(dx, dy);
+            this.ctx.translate(this.shakeX, this.shakeY);
         }
 
         this.ctx.fillStyle = '#0f172a';

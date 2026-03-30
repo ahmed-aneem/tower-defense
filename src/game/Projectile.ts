@@ -21,6 +21,7 @@ export class Projectile implements IProjectile {
   isCluster: boolean = false;
   origin: Vector2;
   maxRange: number;
+  trail: Vector2[] = [];
 
   constructor(
       startPos: Vector2,
@@ -84,12 +85,18 @@ export class Projectile implements IProjectile {
     this.isCluster = isCluster;
     this.targetId = null;
     this.hitList.clear();
+    this.trail = [];
 
     const dir = targetPos.sub(startPos).normalize();
     this.velocity = dir.scale(this.speed);
   }
 
   update() {
+    this.trail.push(this.position.clone());
+    if (this.trail.length > 3) {
+        this.trail.shift();
+    }
+
     this.position = this.position.add(this.velocity);
 
     // Basic bounds check to clean up stray projectiles
@@ -104,6 +111,23 @@ export class Projectile implements IProjectile {
 
   draw(ctx: CanvasRenderingContext2D) {
     if (!this.active) return;
+
+    // Draw trail
+    if (this.trail.length > 0) {
+        ctx.beginPath();
+        ctx.moveTo(this.trail[0].x, this.trail[0].y);
+        for (let i = 1; i < this.trail.length; i++) {
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+        }
+        ctx.lineTo(this.position.x, this.position.y);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.isSplash ? 6 : 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalAlpha = 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+    }
 
     ctx.beginPath();
     const r = this.isSplash ? 6 : 4;
