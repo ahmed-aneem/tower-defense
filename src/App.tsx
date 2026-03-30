@@ -138,7 +138,7 @@ function App() {
     if (!engineRef.current) return;
 
     // Only attempt placement on pointer up if we are dragging a tower
-    if (selectedTowerType && isPointerDown) {
+    if (selectedTowerType) {
       const success = engineRef.current.confirmPlacement();
       if (success) {
         setSelectedTowerType(null);
