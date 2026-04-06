@@ -4,7 +4,6 @@ export interface QuadTreeItem {
   id: string;
   position: Vector2;
   radius: number;
-  [key: string]: unknown;
 }
 
 export interface Rect {

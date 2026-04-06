@@ -183,10 +183,39 @@ export class Tower implements ITower {
 
     if (target) {
       this.targetId = (target as Enemy).id;
-      // Calculate rotation to face target
-      const dy = (target as Enemy).position.y - this.position.y;
-      const dx = (target as Enemy).position.x - this.position.x;
+
+      // Intercept targeting logic
+      // Estimate travel time of projectile. Base speed is around 8.
+      const projSpeed = 8; // TODO: Pull from tower/projectile config
+      const distToTarget = this.position.distanceTo(target.position);
+      const travelTimeFrames = distToTarget / projSpeed;
+
+      // Calculate anticipated position based on target's current path direction and speed
+      let anticipatedPos = target.position.clone();
+      if (target.path && target.path.length > target.waypointIndex + 1) {
+          const nextWaypoint = target.path[target.waypointIndex + 1];
+          const dirToWaypoint = nextWaypoint.sub(target.position).normalize();
+          const targetCurrentSpeed = target.speed * target.getSpeedMultiplier();
+
+          anticipatedPos = target.position.add(dirToWaypoint.scale(targetCurrentSpeed * travelTimeFrames));
+
+          // Clamp anticipated position so it doesn't overshoot the waypoint for simple logic
+          if (target.position.distanceTo(anticipatedPos) > target.position.distanceTo(nextWaypoint)) {
+              anticipatedPos = nextWaypoint.clone();
+          }
+      }
+
+      // We still update the visual rotation to look at the anticipated position
+      const dy = anticipatedPos.y - this.position.y;
+      const dx = anticipatedPos.x - this.position.x;
       this.rotation = Math.atan2(dy, dx);
+
+      // We also need a way to pass this anticipated pos back.
+      // Easiest is to temporarily modify target.position, but that's bad.
+      // Instead, we return an object or attach a temp property, but the GameEngine handles firing.
+      // Let's attach the intercepted position to the target object just for the engine to read when spawning projectile.
+      target.anticipatedPosition = anticipatedPos;
+
     } else {
       this.targetId = null;
     }

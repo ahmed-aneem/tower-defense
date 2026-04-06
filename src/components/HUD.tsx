@@ -91,7 +91,7 @@ export const HUD: React.FC<HUDProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, selectedTower, selectedTowerType, engine]);
+  }, [gameState, selectedTower, selectedTowerType, engine, onCancelPlacement, onDeselect, onSellTower, onSelectTower]);
 
   const cycleTargetingMode = () => {
     if (!selectedTower) return;

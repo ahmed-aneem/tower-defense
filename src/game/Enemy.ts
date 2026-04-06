@@ -2,8 +2,9 @@ import { Vector2 } from './Vector';
 import { type IEnemy, type EnemyType } from '../types';
 import { ENEMIES, DefenseType } from './Constants';
 import { type StatusEffect, StatusEffectType } from './StatusEffects';
+import { type QuadTreeItem } from './QuadTree';
 
-export class Enemy implements IEnemy {
+export class Enemy implements IEnemy, QuadTreeItem {
   id: string;
   position: Vector2;
   hp: number;
@@ -21,6 +22,7 @@ export class Enemy implements IEnemy {
   isCamo: boolean;
   isRegen: boolean;
   lastDamageTime: number = 0; // For regen delay
+  anticipatedPosition?: Vector2;
 
   // Visuals
   scale: number = 0;
@@ -29,7 +31,7 @@ export class Enemy implements IEnemy {
   rotation: number = 0;
 
   waypointIndex: number = 0;
-  private path: Vector2[] = [];
+  public path: Vector2[] = [];
   private wobbleOffset: number = Math.random() * 100;
   private hasStartPosition: boolean = false;
 

@@ -10,6 +10,8 @@ import { soundManager } from './SoundManager';
 import { type Mod, MODS } from './Mods';
 import { WaveManager } from './systems/WaveManager';
 import { InputManager } from './systems/InputManager';
+import { ProjectileSystem } from './systems/ProjectileSystem';
+import { RenderSystem } from './systems/RenderSystem';
 
 
 export interface GameState {
@@ -69,6 +71,8 @@ export class GameEngine {
     path: Vector2[];
     public waveManager: WaveManager;
     public inputManager: InputManager;
+    private projectileSystem: ProjectileSystem;
+    private renderSystem: RenderSystem;
 
     private autoStartTimer: number = 0;
     modOptions: Mod[] = [];
@@ -87,9 +91,9 @@ export class GameEngine {
     public speedMultiplier: number = 1;
 
     // Screen shake
-    private shakeIntensity: number = 0;
-    private shakeX: number = 0;
-    private shakeY: number = 0;
+    public shakeIntensity: number = 0;
+    public shakeX: number = 0;
+    public shakeY: number = 0;
 
     constructor(canvas: HTMLCanvasElement, mapPath: Vector2[], width: number, height: number, onStateChange: (state: GameState) => void) {
         this.canvas = canvas;
@@ -100,17 +104,18 @@ export class GameEngine {
         this.path = mapPath.map(p => new Vector2(p.x * width, p.y * height));
         this.waveManager = new WaveManager();
         this.inputManager = new InputManager();
-
+        this.projectileSystem = new ProjectileSystem(this);
+        this.renderSystem = new RenderSystem(this);
 
         // Init Pools
         this.projectilePool = new ObjectPool<Projectile>(
             () => new Projectile(new Vector2(0, 0), new Vector2(0, 0), 0, ''),
-            (p, start, target, dmg, col, type, pierce, splash, rad, effect, isCluster, maxRange) => p.reset(start, target, dmg, col, type, pierce, splash, rad, effect, isCluster, maxRange)
+            (p, start, target, dmg, col, type, pierce, splash, rad, effect, isCluster, maxRange) => p.reset(start as Vector2, target as Vector2, dmg as number, col as string, type as DamageType, pierce as number, splash as boolean, rad as number, effect as import('./StatusEffects').StatusEffect, isCluster as boolean, maxRange as number)
         );
 
         this.particlePool = new ObjectPool<Particle>(
             () => new Particle(new Vector2(0, 0), ''),
-            (p, pos, col, speed, size, txt, shape, gravity) => p.reset(pos, col, speed, size, txt, shape, gravity)
+            (p, pos, col, speed, size, txt, shape, gravity) => p.reset(pos as Vector2, col as string, speed as number, size as number, txt as string, shape as 'CIRCLE'|'SQUARE'|'STAR'|'POP', gravity as number)
         );
 
         // Init QuadTree
@@ -129,6 +134,12 @@ export class GameEngine {
     private handleResize = () => {
         this.updateCanvasSize();
     };
+
+    public resize(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+        this.updateCanvasSize();
+    }
 
     destroy() {
         this.isRunning = false;
@@ -512,15 +523,16 @@ export class GameEngine {
                     }
 
                     const effect = t.statusEffect ? { ...t.statusEffect, sourceId: t.id } : undefined;
-                    this.projectiles.push(this.projectilePool.get(t.position, target.position, damage, color, t.damageType, t.pierce, isSplash, splashRadius, effect, isCluster, t.range + 50));
+
+                    // Use anticipated position if available
+                    const targetPos = target.anticipatedPosition || target.position;
+
+                    this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, color, t.damageType, t.pierce, isSplash, splashRadius, effect, isCluster, t.range + 50));
                     soundManager.playShoot(t.type);
                     this.createExplosion(t.position, t.color, 3, 0.5);
                 }
             }
         });
-
-        // Update Projectiles
-        this.projectiles.forEach(p => p.update());
 
         // Rebuild QuadTree
         this.quadTree = new QuadTree({ x: 0, y: 0, w: this.width, h: this.height }, 4);
@@ -530,101 +542,8 @@ export class GameEngine {
             }
         });
 
-        // Collision Detection (Projectile vs Enemy)
-        for (let i = this.projectiles.length - 1; i >= 0; i--) {
-            const p = this.projectiles[i];
-            if (!p.active) {
-                this.projectiles.splice(i, 1);
-                this.projectilePool.release(p);
-                continue;
-            }
-
-            // Query QuadTree for potential collisions
-            // For direct hits, we check a small radius. For splash, we might still check direct hit first or just explode?
-            // Existing logic: "Projectile travels, hits FIRST enemy it touches".
-            // So we search for candidates near projectile.
-            const searchRadius = 30; // Max enemy radius + buffer
-            const candidates = this.quadTree.queryCircle(p.position, searchRadius);
-
-            for (const item of candidates) {
-                const e = item as Enemy;
-                if (e.isDead || p.hitList.has(e.id)) continue;
-
-                if (p.position.distanceTo(e.position) < e.radius + 5) { // 5 is projectile size buffer
-                    p.hitList.add(e.id);
-                    const finalDamage = this.calculateDamage(p.damage, p.damageType, e.defenseType);
-
-                    if (p.isSplash) {
-                        // For splash, we query again for the splash radius
-                        const splashCandidates = this.quadTree.queryCircle(p.position, p.splashRadius);
-                        splashCandidates.forEach(splashItem => {
-                            const nearby = splashItem as Enemy;
-                            if (nearby.isDead) return;
-                            // Exact circle check
-                            if (nearby.position.distanceTo(p.position) <= p.splashRadius + nearby.radius) {
-                                const splashDmg = this.calculateDamage(p.damage, p.damageType, nearby.defenseType);
-                                nearby.takeDamage(splashDmg);
-                                if (p.statusEffect) nearby.applyEffect(p.statusEffect);
-                                if (splashDmg <= 0) this.createFloatingText(nearby.position, "IMMUNE", "#fff");
-                            }
-                        });
-                        this.createExplosion(p.position, p.color, 20, 1.5);
-                        soundManager.playExplosion();
-
-                        // Cluster Bomb Logic
-                        if (p.isCluster) {
-                            for (let j = 0; j < 5; j++) {
-                                const angle = (Math.PI * 2 * j) / 5;
-                                const clusterTarget = new Vector2(
-                                    p.position.x + Math.cos(angle) * 100,
-                                    p.position.y + Math.sin(angle) * 100
-                                );
-                                // Spawn smaller bombs
-                                this.projectiles.push(this.projectilePool.get(
-                                    p.position,
-                                    clusterTarget,
-                                    Math.floor(p.damage * 0.3),
-                                    '#fca5a5',
-                                    DamageType.EXPLOSIVE,
-                                    1,
-                                    true, // isSplash
-                                    30, // smaller radius
-                                    undefined,
-                                    false, // not cluster again
-                                    200 // max range for cluster
-                                ));
-                            }
-                        }
-
-                        p.active = false;
-                    } else {
-                        e.takeDamage(finalDamage);
-                        // Pop Effect
-                        this.particles.push(this.particlePool.get(e.position, e.color, 1, e.radius / 10, undefined, 'POP'));
-
-                        if (p.statusEffect) e.applyEffect(p.statusEffect);
-
-                        if (finalDamage <= 0) {
-                            this.createFloatingText(e.position, "IMMUNE", "#fff");
-                        } else {
-                            this.createExplosion(p.position, p.color, 5, 0.5);
-                        }
-
-                        p.pierce--;
-                        if (p.pierce <= 0) {
-                            p.active = false;
-                        }
-                    }
-
-                    if (!p.active) break;
-                }
-            }
-
-            if (!p.active) {
-                this.projectiles.splice(i, 1);
-                this.projectilePool.release(p);
-            }
-        }
+        // Update Projectiles and Handle Collisions
+        this.projectileSystem.update(this.projectiles, this.quadTree, this.particlePool, this.projectilePool);
 
         // Cleanup Dead Enemies
         for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -698,6 +617,23 @@ export class GameEngine {
         }
     }
 
+    public createExplosion(pos: Vector2, color: string, count: number, scale: number = 1) {
+        for (let i = 0; i < count; i++) {
+            const shape = Math.random() > 0.5 ? 'SQUARE' : 'CIRCLE';
+            // Occasional star for big explosions
+            const finalShape = (scale > 1.5 && Math.random() > 0.7) ? 'STAR' : shape;
+
+            // Gravity only for non-circle (debris)
+            const gravity = finalShape === 'CIRCLE' ? 0 : 0.3;
+
+            this.particles.push(this.particlePool.get(pos, color, scale, scale, undefined, finalShape, gravity));
+        }
+    }
+
+    public createFloatingText(pos: Vector2, text: string, color: string) {
+        this.particles.push(this.particlePool.get(pos, color, 1, 1, text));
+    }
+
     private applyEndOfWaveMods() {
         if (this.hasMod('LIFE_REGEN')) {
             this.state.lives += 2;
@@ -712,22 +648,6 @@ export class GameEngine {
         }
     }
 
-    private createExplosion(pos: Vector2, color: string, count: number, scale: number = 1) {
-        for (let i = 0; i < count; i++) {
-            const shape = Math.random() > 0.5 ? 'SQUARE' : 'CIRCLE';
-            // Occasional star for big explosions
-            const finalShape = (scale > 1.5 && Math.random() > 0.7) ? 'STAR' : shape;
-
-            // Gravity only for non-circle (debris)
-            const gravity = finalShape === 'CIRCLE' ? 0 : 0.3;
-
-            this.particles.push(this.particlePool.get(pos, color, scale, scale, undefined, finalShape, gravity));
-        }
-    }
-
-    private createFloatingText(pos: Vector2, text: string, color: string) {
-        this.particles.push(this.particlePool.get(pos, color, 1, 1, text));
-    }
 
     private fireTesla(tower: Tower, initialTarget: Enemy) {
         const targets: Enemy[] = [initialTarget];
@@ -865,107 +785,7 @@ export class GameEngine {
     }
 
     private draw() {
-        this.ctx.save();
-
-        if (this.shakeIntensity > 0) {
-            this.ctx.translate(this.shakeX, this.shakeY);
-        }
-
-        this.ctx.fillStyle = '#0f172a';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        if (this.gridCanvas) {
-            this.ctx.drawImage(this.gridCanvas, 0, 0);
-        } else {
-            this.drawGrid();
-        }
-
-        // Draw Path (No Blur)
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.path[0].x, this.path[0].y);
-        for (let i = 1; i < this.path.length; i++) {
-            this.ctx.lineTo(this.path[i].x, this.path[i].y);
-        }
-        this.ctx.lineWidth = 20;
-        this.ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
-        this.ctx.lineCap = 'round';
-        this.ctx.lineJoin = 'round';
-        this.ctx.stroke();
-
-        this.ctx.lineWidth = 3;
-        this.ctx.strokeStyle = '#60a5fa';
-        this.ctx.stroke();
-
-        this.towers.forEach(t => {
-            t.draw(this.ctx);
-            if (t.type === 'LASER' && t.targetId) {
-                const target = this.enemies.find(e => e.id === t.targetId);
-                if (target && !target.isDead) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(t.position.x, t.position.y);
-                    this.ctx.lineTo(target.position.x, target.position.y);
-                    this.ctx.lineWidth = 4;
-                    this.ctx.strokeStyle = t.color;
-                    this.ctx.lineCap = 'round';
-                    this.ctx.stroke();
-
-                    this.ctx.lineWidth = 1;
-                    this.ctx.strokeStyle = '#fff';
-                    this.ctx.stroke();
-
-                    this.createExplosion(target.position, t.color, 1, 0.5);
-                }
-            }
-        });
-        this.enemies.forEach(e => e.draw(this.ctx));
-
-        this.projectiles.forEach(p => {
-            p.draw(this.ctx)
-        });
-
-        this.lightningBolts.forEach(bolt => {
-            if (bolt.points.length < 2) return;
-            this.ctx.save();
-            this.ctx.beginPath();
-            this.ctx.moveTo(bolt.points[0].x, bolt.points[0].y);
-            for (let i = 1; i < bolt.points.length; i++) {
-                this.ctx.lineTo(bolt.points[i].x, bolt.points[i].y);
-            }
-            this.ctx.strokeStyle = bolt.color;
-            this.ctx.lineWidth = bolt.width;
-            this.ctx.lineCap = 'round';
-            this.ctx.lineJoin = 'round';
-            this.ctx.globalAlpha = bolt.life / bolt.maxLife;
-            this.ctx.stroke();
-            this.ctx.restore();
-        });
-
-        this.particles.forEach(p => p.draw(this.ctx));
-
-        // Draw Placement Ghost
-        this.inputManager.drawPreview(this.ctx);
-
-        this.ctx.restore();
-    }
-
-    private drawGrid() {
-        this.ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
-        this.ctx.lineWidth = 1;
-
-        const cellSize = 40;
-        for (let x = 0; x <= this.canvas.width; x += cellSize) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, this.canvas.height);
-            this.ctx.stroke();
-        }
-
-        for (let y = 0; y <= this.canvas.height; y += cellSize) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(this.canvas.width, y);
-            this.ctx.stroke();
-        }
+        this.renderSystem.draw();
     }
 
     private notifyState(immediate: boolean = false) {

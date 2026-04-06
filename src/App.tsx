@@ -26,7 +26,6 @@ function App() {
   const [selectedTowerType, setSelectedTowerType] = useState<TowerType | null>(null);
   const [selectedTower, setSelectedTower] = useState<Tower | null>(null);
   const [selectedMap, setSelectedMap] = useState<MapConfig>(MAPS[0]);
-  const [isPointerDown, setIsPointerDown] = useState(false);
   const [scale, setScale] = useState(1);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
   const [isPortrait, setIsPortrait] = useState(false);
@@ -107,7 +106,15 @@ function App() {
         engineRef.current.destroy();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMap]);
+
+  // Handle dimension changes cleanly
+  useEffect(() => {
+    if (engineRef.current) {
+        engineRef.current.resize(dimensions.width, dimensions.height);
+    }
+  }, [dimensions.width, dimensions.height]);
 
   // Sync placement mode
   useEffect(() => {
@@ -128,13 +135,11 @@ function App() {
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    setIsPointerDown(true);
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
     engineRef.current?.updateMouse(new Vector2(x, y));
   };
 
   const handlePointerUp = () => {
-    setIsPointerDown(false);
     if (!engineRef.current) return;
 
     // Only attempt placement on pointer up if we are dragging a tower
