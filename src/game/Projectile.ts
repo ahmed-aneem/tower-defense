@@ -9,6 +9,7 @@ export class Projectile implements IProjectile {
   velocity: Vector2;
   damage: number;
   targetId: string | null;
+  sourceId?: string;
   active: boolean = true;
   speed: number = 8;
   color: string;
@@ -34,7 +35,8 @@ export class Projectile implements IProjectile {
       splashRadius: number = 0,
       statusEffect?: StatusEffect,
       isCluster: boolean = false,
-      maxRange: number = 2000
+      maxRange: number = 2000,
+      sourceId?: string
   ) {
     this.id = Math.random().toString(36).substr(2, 9);
     this.position = startPos.clone();
@@ -50,6 +52,7 @@ export class Projectile implements IProjectile {
     this.splashRadius = splashRadius;
     this.statusEffect = statusEffect;
     this.isCluster = isCluster;
+    this.sourceId = sourceId;
 
     // If real positions provided, init velocity
     if (targetPos) {
@@ -69,7 +72,8 @@ export class Projectile implements IProjectile {
       splashRadius: number = 0,
       statusEffect?: StatusEffect,
       isCluster: boolean = false,
-      maxRange: number = 2000
+      maxRange: number = 2000,
+      sourceId?: string
   ) {
     this.active = true;
     this.position = startPos.clone();
@@ -85,6 +89,7 @@ export class Projectile implements IProjectile {
     this.isCluster = isCluster;
     this.targetId = null;
     this.hitList.clear();
+    this.sourceId = sourceId;
     this.trail = [];
 
     const dir = targetPos.sub(startPos).normalize();

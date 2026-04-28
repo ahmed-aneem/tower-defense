@@ -45,6 +45,7 @@ export class GameEngine {
 
     enemies: Enemy[] = [];
     towers: Tower[] = [];
+    towerMap: Map<string, Tower> = new Map();
     projectiles: Projectile[] = [];
     particles: Particle[] = [];
     lightningBolts: LightningBolt[] = [];
@@ -110,7 +111,7 @@ export class GameEngine {
         // Init Pools
         this.projectilePool = new ObjectPool<Projectile>(
             () => new Projectile(new Vector2(0, 0), new Vector2(0, 0), 0, ''),
-            (p, start, target, dmg, col, type, pierce, splash, rad, effect, isCluster, maxRange) => p.reset(start as Vector2, target as Vector2, dmg as number, col as string, type as DamageType, pierce as number, splash as boolean, rad as number, effect as import('./StatusEffects').StatusEffect, isCluster as boolean, maxRange as number)
+            (p, start, target, dmg, col, type, pierce, splash, rad, effect, isCluster, maxRange, sourceId) => p.reset(start as Vector2, target as Vector2, dmg as number, col as string, type as DamageType, pierce as number, splash as boolean, rad as number, effect as import('./StatusEffects').StatusEffect, isCluster as boolean, maxRange as number, sourceId as string)
         );
 
         this.particlePool = new ObjectPool<Particle>(
@@ -284,6 +285,7 @@ export class GameEngine {
             }
 
             this.towers.push(newTower);
+            this.towerMap.set(newTower.id, newTower);
 
             // Visual feedback
             this.createExplosion(pos, TOWERS[type].color, 10, 2);
@@ -302,6 +304,7 @@ export class GameEngine {
         this.createFloatingText(tower.position, `+$${refund}`, "#F87171");
         this.createExplosion(tower.position, '#F87171', 8, 1.5);
         this.towers = this.towers.filter(t => t.id !== tower.id);
+        this.towerMap.delete(tower.id);
         this.notifyState();
     }
 
@@ -479,6 +482,7 @@ export class GameEngine {
                     // Generate Money
                     const income = 15 + (t.level * 10);
                     this.state.money += income;
+                    t.pops += income;
                     this.createFloatingText(t.position, `+$${income}`, '#FCD34D');
                     t.cooldownTimer = t.maxCooldown;
                     this.notifyState();
@@ -488,6 +492,7 @@ export class GameEngine {
 
             if (target) {
                 if (t.type === 'LASER') {
+                    t.pops += t.damage;
                     if (Math.random() < 0.1) soundManager.playShoot(t.type);
                 } else if (t.type === 'TESLA') {
                     this.fireTesla(t, target);
@@ -506,7 +511,7 @@ export class GameEngine {
                         const damage = t.damage;
                         const effect = t.statusEffect ? { ...t.statusEffect, sourceId: t.id } : undefined;
 
-                        this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, t.color, t.damageType, t.pierce, false, 0, effect, false, t.range + 50));
+                        this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, t.color, t.damageType, t.pierce, false, 0, effect, false, t.range + 50, t.id));
                     }
                     soundManager.playShoot(t.type);
                 } else {
@@ -527,7 +532,7 @@ export class GameEngine {
                     // Use anticipated position if available
                     const targetPos = target.anticipatedPosition || target.position;
 
-                    this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, color, t.damageType, t.pierce, isSplash, splashRadius, effect, isCluster, t.range + 50));
+                    this.projectiles.push(this.projectilePool.get(t.position, targetPos, damage, color, t.damageType, t.pierce, isSplash, splashRadius, effect, isCluster, t.range + 50, t.id));
                     soundManager.playShoot(t.type);
                     this.createExplosion(t.position, t.color, 3, 0.5);
                 }
@@ -656,6 +661,7 @@ export class GameEngine {
         // Damage initial
         const initialDmg = this.calculateDamage(tower.damage, tower.damageType, initialTarget.defenseType);
         initialTarget.takeDamage(initialDmg);
+        tower.pops += initialDmg;
         if (tower.statusEffect) initialTarget.applyEffect(tower.statusEffect);
         if (initialDmg <= 0) {
              this.createFloatingText(initialTarget.position, "IMMUNE", "#fff");
@@ -719,6 +725,7 @@ export class GameEngine {
                 // Damage chained
                 const dmg = this.calculateDamage(Math.floor(tower.damage * 0.8), tower.damageType, current.defenseType);
                 current.takeDamage(dmg);
+                tower.pops += dmg;
                 if (tower.statusEffect) current.applyEffect(tower.statusEffect);
                 if (dmg <= 0) {
                     this.createFloatingText(current.position, "IMMUNE", "#fff");

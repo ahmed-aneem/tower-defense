@@ -30,6 +30,8 @@ export interface ITower extends GameEntity {
   rotation: number;
   level: number;
   targetId: string | null;
+  pops: number;
+
   upgradeCost: number;
   targetingMode: TowerTargetingMode;
   damageType: DamageType;
@@ -42,6 +44,7 @@ export interface ITower extends GameEntity {
 export interface IProjectile extends GameEntity {
   damage: number;
   targetId: string | null; // Homing logic potentially
+  sourceId?: string;
   velocity: Vector2;
   active: boolean;
   color: string;

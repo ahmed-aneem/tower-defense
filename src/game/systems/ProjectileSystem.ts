@@ -51,6 +51,10 @@ export class ProjectileSystem {
                             if (nearby.position.distanceTo(p.position) <= p.splashRadius + nearby.radius) {
                                 const splashDmg = this.calculateDamage(p.damage, p.damageType, nearby.defenseType);
                                 nearby.takeDamage(splashDmg);
+                                if (p.sourceId) {
+                                    const tower = this.engine.towerMap.get(p.sourceId);
+                                    if (tower) tower.pops += splashDmg;
+                                }
                                 if (p.statusEffect) nearby.applyEffect(p.statusEffect);
                                 if (splashDmg <= 0) this.engine.createFloatingText(nearby.position, "IMMUNE", "#fff");
                             }
@@ -86,6 +90,10 @@ export class ProjectileSystem {
                         p.active = false;
                     } else {
                         e.takeDamage(finalDamage);
+                        if (p.sourceId) {
+                            const tower = this.engine.towerMap.get(p.sourceId);
+                            if (tower) tower.pops += finalDamage;
+                        }
                         // Pop Effect
                         this.engine.particles.push(particlePool.get(e.position, e.color, 1, e.radius / 10, undefined, 'POP'));
 

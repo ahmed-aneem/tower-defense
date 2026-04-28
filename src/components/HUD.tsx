@@ -233,6 +233,10 @@ export const HUD: React.FC<HUDProps> = ({
               <span>Type</span>
               <span className="font-mono text-white text-[10px] bg-slate-800 px-1 rounded">{selectedTower.damageType}</span>
             </div>
+            <div className="flex justify-between border-t border-slate-700/50 pt-2 mt-2">
+              <span className="text-emerald-400 font-bold">Pops / Income</span>
+              <span className="font-mono text-white font-bold">{Math.floor(selectedTower.pops).toLocaleString()}</span>
+            </div>
             {selectedTower.camoDetection && (
               <div className="flex justify-between text-emerald-400">
                 <span>Camo Detect</span>

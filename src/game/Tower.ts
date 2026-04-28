@@ -15,6 +15,7 @@ export class Tower implements ITower {
   rotation: number = 0;
   level: number = 1;
   targetId: string | null = null;
+  pops: number = 0;
   color: string;
 
   targetingMode: TowerTargetingMode = TowerTargetingMode.FIRST;
