@@ -54,7 +54,7 @@ export class Tower implements ITower {
     return 0;
   }
 
-  upgrade() {
+  upgrade(path: 'A' | 'B' = 'A') {
     if (this.level >= 3) return;
 
     this.totalSpent += this.upgradeCost;
@@ -72,21 +72,74 @@ export class Tower implements ITower {
         // Advanced Upgrades
         this.camoDetection = true; // All towers get Camo at level 3
 
-        if (this.type === 'SNIPER') {
-            // Railgun
-            this.damage *= 2;
-            this.pierce = 20;
-            this.damageType = DamageType.ENERGY; // Change to Energy
-        } else if (this.type === 'BASIC') {
-            // Double Tap
-            this.maxCooldown = Math.floor(this.maxCooldown / 2);
+        if (this.type === 'BASIC') {
+            if (path === 'A') {
+                this.maxCooldown = Math.floor(this.maxCooldown / 2); // Double Tap
+            } else {
+                this.damage = Math.ceil(this.damage * 2.5); // Heavy Caliber
+                this.pierce += 3;
+            }
+        } else if (this.type === 'SNIPER') {
+            if (path === 'A') {
+                this.damage *= 2; // Railgun
+                this.pierce = 20;
+                this.damageType = DamageType.ENERGY;
+            } else {
+                this.maxCooldown = Math.floor(this.maxCooldown * 0.4); // Semi-Auto
+            }
         } else if (this.type === 'SPLASH') {
-            // Cluster Bomb (Logic handled in Projectile but stats buff here)
-            this.range += 50;
-            this.damage = Math.ceil(this.damage * 1.2);
+            if (path === 'A') {
+                this.range += 50; // Cluster Bomb (handled in ProjectileSystem)
+                this.damage = Math.ceil(this.damage * 1.2);
+            } else {
+                this.damage = Math.ceil(this.damage * 3); // Heavy Ordnance
+                this.maxCooldown = Math.ceil(this.maxCooldown * 1.2);
+            }
+        } else if (this.type === 'RAPID') {
+            if (path === 'A') {
+                this.damage = Math.ceil(this.damage * 2); // Laser Tip
+                this.damageType = DamageType.ENERGY;
+            } else {
+                this.maxCooldown = Math.max(1, Math.floor(this.maxCooldown * 0.5)); // Overdrive
+            }
+        } else if (this.type === 'FROST') {
+            if (path === 'A') {
+                this.range += 100; // Deep Freeze
+            } else {
+                this.damage = 10; // Icicles (now deals damage)
+            }
+        } else if (this.type === 'LASER') {
+            if (path === 'A') {
+                this.damage *= 2; // Plasma Beam
+            } else {
+                this.pierce += 10; // Focusing Lens
+            }
+        } else if (this.type === 'TESLA') {
+            if (path === 'A') {
+                this.damage *= 2; // High Voltage
+            } else {
+                this.pierce += 5; // Chain Lightning
+            }
+        } else if (this.type === 'TACK') {
+            if (path === 'A') {
+                this.damage = Math.ceil(this.damage * 2); // Heavy Tacks
+            } else {
+                this.maxCooldown = Math.floor(this.maxCooldown * 0.5); // Blade Shooter
+            }
+        } else if (this.type === 'FARM') {
+            if (path === 'A') {
+                this.maxCooldown = Math.floor(this.maxCooldown * 0.6); // Faster Production
+            } else {
+                this.level += 2; // Central Market (generates way more)
+            }
         } else if (this.type === 'PLASMA') {
-             this.damage = Math.ceil(this.damage * 2);
-             this.range += 50;
+            if (path === 'A') {
+                 this.damage = Math.ceil(this.damage * 2); // Overdrive
+                 this.range += 50;
+            } else {
+                 this.pierce += 20; // Plasma Coil
+                 this.maxCooldown = Math.floor(this.maxCooldown * 0.8);
+            }
         } else {
              // Generic Level 3
              this.damage = Math.ceil(this.damage * 1.5);

@@ -92,7 +92,8 @@ export class RenderSystem {
         particles.forEach(p => p.draw(ctx));
 
         // Draw Placement Ghost
-        this.engine.inputManager.drawPreview(ctx);
+        const canPlace = this.engine.canPlaceTower(this.engine.mousePosition);
+        this.engine.inputManager.drawPreview(ctx, canPlace);
 
         ctx.restore();
     }

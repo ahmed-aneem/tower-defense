@@ -11,14 +11,14 @@ This is a modern Tower Defense game built with React, TypeScript, and HTML5 Canv
 - **State Management**: The Engine notifies React of state changes (money, lives, wave, active mods) to update the HUD.
 - **Maps**: Maps are defined in `src/game/Maps.ts`. The Engine is re-initialized when the map changes.
 - **Mods**: A roguelite system where players pick upgrades every 5 waves. Logic in `src/game/Mods.ts` and `GameEngine.ts`.
-- **Performance**: Uses `ObjectPool` for high-frequency entities, removed expensive Canvas shadows, and throttles React state updates to ensure 60FPS on mobile.
+- **Performance**: Uses `ObjectPool` for high-frequency entities, removed expensive Canvas shadows, capped accumulator to prevent spiral-of-death, and throttles React state updates to ensure 60FPS on mobile.
 
 ## Features
 
 - **Game Speed**: Adjustable game speed (1x, 2x, 4x).
 
 - **Towers**: 9 Types (Basic, Sniper, Rapid, Frost, Splash, Laser, Tack, Farm, Plasma).
-- **Upgrades**: Deep Level 3 upgrades (e.g., Railgun, Double Tap, Cluster Bomb, Plasma Overdrive).
+- **Upgrades**: Deep Level 3 upgrades (e.g., Railgun, Double Tap, Cluster Bomb, Plasma Overdrive) with two distinct paths (A and B) available at Level 3.
 - **Targeting**: Towers have configurable targeting priorities (First, Last, Strongest, Weakest, Closest).
 - **Maps**: 3 distinct layouts with different strategies.
 - **Mods**: System upgrades (Damage, Range, Economy, etc.) offered periodically.

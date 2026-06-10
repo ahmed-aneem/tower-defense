@@ -268,9 +268,9 @@ export const HUD: React.FC<HUDProps> = ({
               </span>
             </button>
 
-            {selectedTower.level < 3 ? (
+            {selectedTower.level < 2 ? (
               <button
-                onClick={() => engine?.current?.upgradeTower(selectedTower)}
+                onClick={() => { engine?.current?.upgradeTower(selectedTower); forceUpdate(n => n + 1); }}
                 disabled={gameState.money < selectedTower.upgradeCost}
                 className={`w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 hover:text-amber-200 border border-amber-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
@@ -279,6 +279,28 @@ export const HUD: React.FC<HUDProps> = ({
                   -${selectedTower.upgradeCost}
                 </span>
               </button>
+            ) : selectedTower.level === 2 ? (
+              <div className="flex flex-col gap-2 w-full">
+                <span className="text-xs text-center text-slate-400 font-bold tracking-widest mt-1">CHOOSE PATH</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { engine?.current?.upgradeTower(selectedTower, 'A'); forceUpdate(n => n + 1); }}
+                    disabled={gameState.money < selectedTower.upgradeCost}
+                    className={`flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <span>PATH A</span>
+                    <span className="bg-blue-950/50 px-1 py-0.5 rounded text-[10px] font-mono">-${selectedTower.upgradeCost}</span>
+                  </button>
+                  <button
+                    onClick={() => { engine?.current?.upgradeTower(selectedTower, 'B'); forceUpdate(n => n + 1); }}
+                    disabled={gameState.money < selectedTower.upgradeCost}
+                    className={`flex-1 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-400 border border-fuchsia-500/30 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <span>PATH B</span>
+                    <span className="bg-fuchsia-950/50 px-1 py-0.5 rounded text-[10px] font-mono">-${selectedTower.upgradeCost}</span>
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="w-full bg-slate-800 text-slate-500 py-2.5 rounded-lg font-bold text-center border border-slate-700">
                 MAX LEVEL

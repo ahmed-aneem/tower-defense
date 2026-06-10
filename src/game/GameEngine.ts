@@ -250,6 +250,23 @@ export class GameEngine {
         return this.state.activeMods.some(m => m.id === id);
     }
 
+    canPlaceTower(pos: Vector2): boolean {
+        // Check collision with other towers
+        for (const t of this.towers) {
+            if (pos.distanceTo(t.position) < 40) return false;
+        }
+
+        // Check collision with path
+        for (let i = 0; i < this.path.length - 1; i++) {
+            const p1 = this.path[i];
+            const p2 = this.path[i + 1];
+            const dist = this.pointToSegmentDistance(pos, p1, p2);
+            if (dist < 30) return false; // Path width + buffer
+        }
+
+        return true;
+    }
+
     placeTower(pos: Vector2, type: TowerType): boolean {
         let cost: number = TOWERS[type].cost;
         // Apply Discount Mod
@@ -257,20 +274,7 @@ export class GameEngine {
             cost = Math.floor(cost * 0.9);
         }
 
-        if (this.state.money >= cost) {
-            // Check collision with other towers
-            for (const t of this.towers) {
-                if (pos.distanceTo(t.position) < 40) return false;
-            }
-
-            // Check collision with path
-            for (let i = 0; i < this.path.length - 1; i++) {
-                const p1 = this.path[i];
-                const p2 = this.path[i + 1];
-                const dist = this.pointToSegmentDistance(pos, p1, p2);
-                if (dist < 30) return false;
-            }
-
+        if (this.state.money >= cost && this.canPlaceTower(pos)) {
             this.state.money -= cost;
             const newTower = new Tower(pos, type);
 
@@ -308,7 +312,7 @@ export class GameEngine {
         this.notifyState();
     }
 
-    upgradeTower(tower: Tower) {
+    upgradeTower(tower: Tower, upgradePath: 'A' | 'B' = 'A') {
         let cost = tower.upgradeCost;
         if (this.hasMod('DISCOUNT')) {
             cost = Math.floor(cost * 0.9);
@@ -316,7 +320,7 @@ export class GameEngine {
 
         if (this.state.money >= cost && tower.level < 3) {
             this.state.money -= cost;
-            tower.upgrade();
+            tower.upgrade(upgradePath);
             tower.totalSpent += cost;
 
             // Apply mods again?
@@ -392,6 +396,10 @@ export class GameEngine {
         if (this.state.gameStarted && !this.state.isGameOver && !this.state.isPaused && !this.state.choosingMod) {
             // Apply speed multiplier to accumulator
             this.accumulator += cappedDelta * this.speedMultiplier;
+
+            if (this.accumulator > 200) {
+                this.accumulator = 200;
+            }
 
             while (this.accumulator >= this.TIMESTEP) {
                 this.update();

@@ -38,7 +38,7 @@ export class InputManager {
         return null;
     }
 
-    drawPreview(ctx: CanvasRenderingContext2D) {
+    drawPreview(ctx: CanvasRenderingContext2D, canPlace: boolean = true) {
         if (this.placementMode) {
             const tConf = TOWERS[this.placementMode];
             ctx.save();
@@ -47,9 +47,9 @@ export class InputManager {
             // Range
             ctx.beginPath();
             ctx.arc(0, 0, tConf.range, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillStyle = canPlace ? 'rgba(255, 255, 255, 0.1)' : 'rgba(239, 68, 68, 0.2)'; // Red if invalid
             ctx.fill();
-            ctx.strokeStyle = '#fff';
+            ctx.strokeStyle = canPlace ? '#fff' : '#ef4444';
             ctx.lineWidth = 1;
             ctx.setLineDash([5, 5]);
             ctx.stroke();
