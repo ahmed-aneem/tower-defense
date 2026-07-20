@@ -39,57 +39,114 @@ export class SoundManager {
 
     const now = this.ctx.currentTime;
 
-    if (type === 'SNIPER') {
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(800, now);
-      osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
-      gain.gain.setValueAtTime(0.5, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-      osc.start(now);
-      osc.stop(now + 0.3);
-    } else if (type === 'RAPID') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(600, now);
-      osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-      osc.start(now);
-      osc.stop(now + 0.05);
-    } else if (type === 'SPLASH') {
-      // Deeper explosion sound
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(200, now);
-      osc.frequency.exponentialRampToValueAtTime(50, now + 0.4);
-      gain.gain.setValueAtTime(0.4, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-      osc.start(now);
-      osc.stop(now + 0.4);
-    } else if (type === 'LASER') {
-      // Hum
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1000, now);
-      osc.frequency.linearRampToValueAtTime(800, now + 0.1);
-      gain.gain.setValueAtTime(0.1, now);
-      gain.gain.linearRampToValueAtTime(0, now + 0.1);
-      osc.start(now);
-      osc.stop(now + 0.1);
-    } else if (type === 'FROST') {
-      // Glassy sound
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1500, now);
-      osc.frequency.exponentialRampToValueAtTime(2000, now + 0.2);
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-      osc.start(now);
-      osc.stop(now + 0.2);
-    } else {
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(400, now);
-      osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-      osc.start(now);
-      osc.stop(now + 0.1);
+    switch (type) {
+      case 'SNIPER':
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+        break;
+      case 'RAPID':
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+        break;
+      case 'SPLASH':
+        // Deeper explosion sound
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+        break;
+      case 'LASER':
+        // Hum
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1000, now);
+        osc.frequency.linearRampToValueAtTime(800, now + 0.1);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+        break;
+      case 'FROST':
+        // Glassy sound
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1500, now);
+        osc.frequency.exponentialRampToValueAtTime(2000, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+        break;
+      case 'TESLA':
+        // Zapping sound
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1200, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+        break;
+      case 'TACK':
+        // Metallic clink
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+        break;
+      case 'FARM':
+        // Coin drop sound
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, now);
+        osc.frequency.exponentialRampToValueAtTime(1500, now + 0.05);
+        osc.frequency.exponentialRampToValueAtTime(2000, now + 0.1);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+        break;
+      case 'PLASMA': {
+        // Deep energy pulse
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.25);
+        // Low pass filter to make it sound "round" and plummy
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, now);
+        filter.frequency.exponentialRampToValueAtTime(200, now + 0.25);
+        osc.disconnect();
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+        break;
+      }
+      default:
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+        break;
     }
   }
 

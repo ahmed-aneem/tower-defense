@@ -148,8 +148,17 @@ export class GameEngine {
     }
 
     private updateCanvasSize() {
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = this.width * dpr;
+        this.canvas.height = this.height * dpr;
+
+        // Ensure CSS size remains logical
+        this.canvas.style.width = `${this.width}px`;
+        this.canvas.style.height = `${this.height}px`;
+
+        this.ctx.resetTransform();
+        this.ctx.scale(dpr, dpr);
+
         this.preRenderGrid();
     }
 

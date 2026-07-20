@@ -286,18 +286,18 @@ export const HUD: React.FC<HUDProps> = ({
                   <button
                     onClick={() => { engine?.current?.upgradeTower(selectedTower, 'A'); forceUpdate(n => n + 1); }}
                     disabled={gameState.money < selectedTower.upgradeCost}
-                    className={`flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex-1 bg-blue-600/40 hover:bg-blue-600/60 text-blue-200 border border-blue-500/50 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-95'}`}
                   >
                     <span>PATH A</span>
-                    <span className="bg-blue-950/50 px-1 py-0.5 rounded text-[10px] font-mono">-${selectedTower.upgradeCost}</span>
+                    <span className="bg-blue-950/80 px-2 py-0.5 rounded text-[10px] font-mono text-blue-300">-${selectedTower.upgradeCost}</span>
                   </button>
                   <button
                     onClick={() => { engine?.current?.upgradeTower(selectedTower, 'B'); forceUpdate(n => n + 1); }}
                     disabled={gameState.money < selectedTower.upgradeCost}
-                    className={`flex-1 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-400 border border-fuchsia-500/30 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex-1 bg-fuchsia-600/40 hover:bg-fuchsia-600/60 text-fuchsia-200 border border-fuchsia-500/50 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(192,38,211,0.3)] transition-all ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-95'}`}
                   >
                     <span>PATH B</span>
-                    <span className="bg-fuchsia-950/50 px-1 py-0.5 rounded text-[10px] font-mono">-${selectedTower.upgradeCost}</span>
+                    <span className="bg-fuchsia-950/80 px-2 py-0.5 rounded text-[10px] font-mono text-fuchsia-300">-${selectedTower.upgradeCost}</span>
                   </button>
                 </div>
               </div>
@@ -373,7 +373,7 @@ export const HUD: React.FC<HUDProps> = ({
                 `}
             >
               <div
-                className={`${isPortrait ? 'w-8 h-8 mb-1' : 'w-10 h-10 sm:w-12 sm:h-12 mb-1 sm:mb-3'} rounded-lg shadow-lg flex items-center justify-center transition-transform group-hover:scale-110`}
+                className={`${isPortrait ? 'w-8 h-8 mb-1' : 'w-10 h-10 sm:w-12 sm:h-12 mb-1 sm:mb-3'} rounded-lg shadow-lg flex items-center justify-center transition-transform group-active:scale-95 lg:group-hover:scale-110`}
                 style={{ backgroundColor: tower.color, boxShadow: isSelected ? `0 0 15px ${tower.color}` : 'none' }}
               >
                 {/* Simple Icon Representation */}

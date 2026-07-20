@@ -9,8 +9,8 @@
 ## 🚧 Phase 2: Depth & Strategy (Current)
 - [x] **Roguelite Mods**: Expand the pool of dynamic upgrades (Economy, Range, etc.).
 - [ ] **New Enemy Types**: Implement "Camo" (Invisible) and "Regen" (Self-healing) units.
-- [ ] **Map Expansion**: Add 2 new layouts with unique pathfinding challenges.
-- [ ] **Audio Overhaul**: Complete the procedural sound generation system.
+- [x] **Map Expansion**: Add 2 new layouts with unique pathfinding challenges.
+- [x] **Audio Overhaul**: Complete the procedural sound generation system.
 
 ## 🚀 Phase 3: Polish & Platform (Future)
 - [ ] **Local Storage**: Save game progress, unlocked maps, and best waves.

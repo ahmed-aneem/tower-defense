@@ -147,7 +147,7 @@ export class Enemy implements IEnemy, QuadTreeItem {
     // Regen Logic
     if (this.isRegen && this.hp < this.maxHp && this.hp > 0 && !this.isDead) {
          if (this.lastDamageTime > 60) { // Delay before regen starts
-             this.hp = Math.min(this.maxHp, this.hp + (this.maxHp * 0.01));
+             this.hp = Math.min(this.maxHp, this.hp + (this.maxHp * 0.02));
          } else {
              this.lastDamageTime++;
          }

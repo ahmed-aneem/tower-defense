@@ -58,5 +58,37 @@ export const MAPS: MapConfig[] = [
         new Vector2(0.75, 0.875),
         new Vector2(1, 0.875)
     ]
+  },
+  {
+    id: 'LOOP',
+    name: 'The Loop',
+    description: 'A circular path that tests endurance.',
+    waypoints: [
+        new Vector2(0, 0.5),
+        new Vector2(0.2, 0.5),
+        new Vector2(0.2, 0.2),
+        new Vector2(0.8, 0.2),
+        new Vector2(0.8, 0.8),
+        new Vector2(0.2, 0.8),
+        new Vector2(0.2, 0.5),
+        new Vector2(0, 0.5)
+    ]
+  },
+  {
+    id: 'SPIRAL',
+    name: 'The Spiral',
+    description: 'A spiral path leading to the center.',
+    waypoints: [
+        new Vector2(0, 0.1),
+        new Vector2(0.9, 0.1),
+        new Vector2(0.9, 0.9),
+        new Vector2(0.1, 0.9),
+        new Vector2(0.1, 0.3),
+        new Vector2(0.7, 0.3),
+        new Vector2(0.7, 0.7),
+        new Vector2(0.3, 0.7),
+        new Vector2(0.3, 0.5),
+        new Vector2(0.5, 0.5)
+    ]
   }
 ];
