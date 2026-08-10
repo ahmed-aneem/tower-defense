@@ -150,7 +150,7 @@ export const HUD: React.FC<HUDProps> = ({
         <div className="flex gap-2">
           <button
             onClick={toggleMute}
-            className="bg-slate-900/90 p-3 rounded-xl text-slate-400 hover:text-white border border-slate-700/50 hover:bg-slate-800 transition-all"
+            className="bg-slate-900/90 p-3 rounded-xl text-slate-400 lg:hover:text-white border border-slate-700/50 lg:hover:bg-slate-800 transition-all"
           >
             {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
           </button>
@@ -158,7 +158,7 @@ export const HUD: React.FC<HUDProps> = ({
             onClick={() => engine?.current?.toggleAutoStart()}
             className={`p-3 rounded-xl border transition-all ${gameState.autoStart
               ? 'bg-purple-500/20 text-purple-400 border-purple-500/50'
-              : 'bg-slate-900/90 text-slate-400 hover:text-white border-slate-700/50 hover:bg-slate-800'}`}
+              : 'bg-slate-900/90 text-slate-400 lg:hover:text-white border-slate-700/50 lg:hover:bg-slate-800'}`}
             title="Auto Start Rounds"
           >
             <RotateCw size={20} className={gameState.autoStart ? "animate-spin-slow" : ""} />
@@ -170,7 +170,7 @@ export const HUD: React.FC<HUDProps> = ({
             }}
             className={`p-3 rounded-xl border transition-all ${gameState.speed > 1
               ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
-              : 'bg-slate-900/90 text-slate-400 hover:text-white border-slate-700/50 hover:bg-slate-800'} relative`}
+              : 'bg-slate-900/90 text-slate-400 lg:hover:text-white border-slate-700/50 lg:hover:bg-slate-800'} relative`}
           >
             <div className="absolute -top-2 -right-2 bg-emerald-500 text-black text-[10px] font-bold px-1.5 rounded-full border border-emerald-400">
               {gameState.speed}x
@@ -181,7 +181,7 @@ export const HUD: React.FC<HUDProps> = ({
             onClick={() => engine?.current?.togglePause()}
             className={`p-3 rounded-xl border transition-all ${gameState.isPaused
               ? 'bg-amber-500/20 text-amber-400 border-amber-500/50'
-              : 'bg-slate-900/90 text-slate-400 hover:text-white border-slate-700/50 hover:bg-slate-800'}`}
+              : 'bg-slate-900/90 text-slate-400 lg:hover:text-white border-slate-700/50 lg:hover:bg-slate-800'}`}
           >
             <Pause size={20} fill={gameState.isPaused ? "currentColor" : "none"} />
           </button>
@@ -193,9 +193,9 @@ export const HUD: React.FC<HUDProps> = ({
         <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-auto">
           <button
             onClick={() => engine?.current?.startWave()}
-            className="group flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-8 py-3 rounded-full font-bold shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all hover:scale-105 active:scale-95 border border-emerald-400/30"
+            className="group flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 lg:hover:from-emerald-500 lg:hover:to-teal-500 text-white px-8 py-3 rounded-full font-bold shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all lg:hover:scale-105 active:scale-95 border border-emerald-400/30"
           >
-            <ShieldAlert size={20} className="group-hover:animate-bounce" />
+            <ShieldAlert size={20} className="lg:group-hover:animate-bounce" />
             <span>DEPLOY NEXT WAVE</span>
           </button>
         </div>
@@ -209,7 +209,7 @@ export const HUD: React.FC<HUDProps> = ({
               <div className="w-4 h-4 rounded-full" style={{ background: TOWERS[selectedTower.type].color, boxShadow: `0 0 10px ${TOWERS[selectedTower.type].color}` }} />
               <h3 className="font-bold text-lg tracking-wide">{TOWERS[selectedTower.type].name.toUpperCase()}</h3>
             </div>
-            <button onClick={onDeselect} className="text-slate-500 hover:text-white transition-colors">✕</button>
+            <button onClick={onDeselect} className="text-slate-500 lg:hover:text-white transition-colors">✕</button>
           </div>
 
           <div className={`space-y-2 mb-6 text-sm text-slate-300 ${isPortrait ? 'text-xs' : ''}`}>
@@ -248,7 +248,7 @@ export const HUD: React.FC<HUDProps> = ({
           {/* Targeting Control */}
           <button
             onClick={cycleTargetingMode}
-            className="w-full mb-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 p-3 rounded-lg flex items-center justify-between group transition-colors"
+            className="w-full mb-4 bg-slate-800 lg:hover:bg-slate-700 border border-slate-600 p-3 rounded-lg flex items-center justify-between group transition-colors"
           >
             <div className="flex items-center gap-2 text-slate-300">
               <Crosshair size={16} />
@@ -260,10 +260,10 @@ export const HUD: React.FC<HUDProps> = ({
           <div className="flex gap-2">
             <button
               onClick={onSellTower}
-              className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 hover:text-rose-200 border border-rose-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group"
+              className="w-full bg-rose-500/20 lg:hover:bg-rose-500/30 text-rose-400 lg:hover:text-rose-200 border border-rose-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group"
             >
               <span>SELL</span>
-              <span className="bg-rose-950/50 px-2 py-0.5 rounded text-xs font-mono group-hover:bg-rose-900/50">
+              <span className="bg-rose-950/50 px-2 py-0.5 rounded text-xs font-mono lg:group-hover:bg-rose-900/50">
                 +${Math.floor(selectedTower.totalSpent * 0.7)}
               </span>
             </button>
@@ -272,10 +272,10 @@ export const HUD: React.FC<HUDProps> = ({
               <button
                 onClick={() => { engine?.current?.upgradeTower(selectedTower); forceUpdate(n => n + 1); }}
                 disabled={gameState.money < selectedTower.upgradeCost}
-                className={`w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 hover:text-amber-200 border border-amber-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full bg-amber-500/20 lg:hover:bg-amber-500/30 text-amber-400 lg:hover:text-amber-200 border border-amber-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <span>UPGRADE</span>
-                <span className="bg-amber-950/50 px-2 py-0.5 rounded text-xs font-mono group-hover:bg-amber-900/50">
+                <span className="bg-amber-950/50 px-2 py-0.5 rounded text-xs font-mono lg:group-hover:bg-amber-900/50">
                   -${selectedTower.upgradeCost}
                 </span>
               </button>
@@ -286,7 +286,7 @@ export const HUD: React.FC<HUDProps> = ({
                   <button
                     onClick={() => { engine?.current?.upgradeTower(selectedTower, 'A'); forceUpdate(n => n + 1); }}
                     disabled={gameState.money < selectedTower.upgradeCost}
-                    className={`flex-1 bg-blue-600/40 hover:bg-blue-600/60 text-blue-200 border border-blue-500/50 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-95'}`}
+                    className={`flex-1 bg-blue-600/40 lg:hover:bg-blue-600/60 text-blue-200 border border-blue-500/50 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-95'}`}
                   >
                     <span>PATH A</span>
                     <span className="bg-blue-950/80 px-2 py-0.5 rounded text-[10px] font-mono text-blue-300">-${selectedTower.upgradeCost}</span>
@@ -294,7 +294,7 @@ export const HUD: React.FC<HUDProps> = ({
                   <button
                     onClick={() => { engine?.current?.upgradeTower(selectedTower, 'B'); forceUpdate(n => n + 1); }}
                     disabled={gameState.money < selectedTower.upgradeCost}
-                    className={`flex-1 bg-fuchsia-600/40 hover:bg-fuchsia-600/60 text-fuchsia-200 border border-fuchsia-500/50 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(192,38,211,0.3)] transition-all ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-95'}`}
+                    className={`flex-1 bg-fuchsia-600/40 lg:hover:bg-fuchsia-600/60 text-fuchsia-200 border border-fuchsia-500/50 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(192,38,211,0.3)] transition-all ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-95'}`}
                   >
                     <span>PATH B</span>
                     <span className="bg-fuchsia-950/80 px-2 py-0.5 rounded text-[10px] font-mono text-fuchsia-300">-${selectedTower.upgradeCost}</span>
@@ -315,13 +315,13 @@ export const HUD: React.FC<HUDProps> = ({
         <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-auto z-30">
           <button
             onClick={onCancelPlacement}
-            className="bg-slate-800/80 hover:bg-red-500 text-white p-4 rounded-full shadow-lg border-2 border-slate-600 hover:border-red-400 transition-all backdrop-blur-sm active:scale-95"
+            className="bg-slate-800/80 lg:hover:bg-red-500 text-white p-4 rounded-full shadow-lg border-2 border-slate-600 lg:hover:border-red-400 transition-all backdrop-blur-sm active:scale-95"
           >
             <X size={28} />
           </button>
           <button
             onClick={onConfirmPlacement}
-            className="bg-emerald-500 hover:bg-emerald-400 text-white p-4 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] border-2 border-emerald-300 transition-all hover:scale-110 active:scale-95"
+            className="bg-emerald-500 lg:hover:bg-emerald-400 text-white p-4 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] border-2 border-emerald-300 transition-all lg:hover:scale-110 active:scale-95"
           >
             <Check size={32} />
           </button>
@@ -334,7 +334,7 @@ export const HUD: React.FC<HUDProps> = ({
           <button
             onClick={() => engine?.current?.activateAbility('ORBITAL_STRIKE')}
             disabled={gameState.money < 500}
-            className={`bg-red-600 hover:bg-red-500 text-white p-4 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)] border-4 border-red-800 transition-all active:scale-95 flex flex-col items-center gap-1 group relative overflow-hidden ${gameState.money < 500 ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-110'}`}
+            className={`bg-red-600 lg:hover:bg-red-500 text-white p-4 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)] border-4 border-red-800 transition-all active:scale-95 flex flex-col items-center gap-1 group relative overflow-hidden ${gameState.money < 500 ? 'opacity-50 grayscale cursor-not-allowed' : 'lg:hover:scale-110'}`}
             title="Orbital Strike ($500)"
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
@@ -368,7 +368,7 @@ export const HUD: React.FC<HUDProps> = ({
                   : 'p-3 sm:p-3 min-w-[90px] sm:min-w-[100px]'}
                   ${isSelected
                   ? 'bg-slate-800 border-blue-400 ring-2 ring-blue-500/50 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.5)]' + (isPortrait ? ' -translate-x-0' : ' -translate-y-2')
-                  : 'bg-slate-900/80 border-slate-700 hover:border-slate-500 hover:bg-slate-800'}
+                  : 'bg-slate-900/80 border-slate-700 lg:hover:border-slate-500 lg:hover:bg-slate-800'}
                   ${!canAfford ? 'opacity-40 cursor-not-allowed grayscale' : ''}
                 `}
             >
@@ -385,6 +385,7 @@ export const HUD: React.FC<HUDProps> = ({
                 {key === 'LASER' && <div className="w-6 h-0.5 bg-white" />}
                 {key === 'TESLA' && <Zap size={24} className="text-white fill-current" />}
                 {key === 'TACK' && <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 bg-slate-900 rounded-full" /></div>}
+                {key === 'BEACON' && <div className="w-3 h-3 border-2 border-white rounded-sm" />}
                 {key === 'FARM' && <div className="w-4 h-4 bg-white" />}
                 {key === 'PLASMA' && <div className="w-6 h-6 rounded-full border-2 border-white bg-violet-300" />}
               </div>
@@ -398,7 +399,7 @@ export const HUD: React.FC<HUDProps> = ({
 
               {/* Stats Popup - Disable/Hide on Portrait mobile to avoid clutter */}
               {!isPortrait && (
-                <div className="absolute bottom-full mb-4 hidden group-hover:block w-48 bg-slate-900/95 text-white text-xs p-3 rounded-lg border border-slate-600 shadow-xl z-20 backdrop-blur-sm pointer-events-none">
+                <div className="absolute bottom-full mb-4 hidden lg:group-hover:block w-48 bg-slate-900/95 text-white text-xs p-3 rounded-lg border border-slate-600 shadow-xl z-20 backdrop-blur-sm pointer-events-none">
                   <div className="flex justify-between mb-1">
                     <span className="text-slate-400">Damage</span>
                     <span className="font-mono text-emerald-400">{tower.damage}</span>
@@ -439,7 +440,7 @@ export const HUD: React.FC<HUDProps> = ({
               <div className="mb-10 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
                 <div className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Target Sector</div>
                 <div className="flex items-center justify-between gap-4">
-                  <button onClick={prevMap} className="p-2 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white">
+                  <button onClick={prevMap} className="p-2 lg:hover:bg-slate-700 rounded-full transition-colors text-slate-400 lg:hover:text-white">
                     <ChevronLeft size={24} />
                   </button>
                   <div className="flex flex-col items-center">
@@ -449,7 +450,7 @@ export const HUD: React.FC<HUDProps> = ({
                     </div>
                     <div className="text-xs text-slate-400 mt-1">{selectedMap.description}</div>
                   </div>
-                  <button onClick={nextMap} className="p-2 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white">
+                  <button onClick={nextMap} className="p-2 lg:hover:bg-slate-700 rounded-full transition-colors text-slate-400 lg:hover:text-white">
                     <ChevronRight size={24} />
                   </button>
                 </div>
@@ -460,9 +461,9 @@ export const HUD: React.FC<HUDProps> = ({
                   engine?.current?.startGame();
                   soundManager.playShoot('BASIC');
                 }}
-                className="group relative w-full bg-blue-600 hover:bg-blue-500 text-white text-xl font-bold py-5 rounded-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(37,99,235,0.4)] overflow-hidden"
+                className="group relative w-full bg-blue-600 lg:hover:bg-blue-500 text-white text-xl font-bold py-5 rounded-2xl flex items-center justify-center gap-4 transition-all lg:hover:scale-[1.02] shadow-[0_0_20px_rgba(37,99,235,0.4)] overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] lg:group-hover:animate-[shimmer_1.5s_infinite]" />
                 <Play fill="currentColor" size={24} />
                 <span>INITIALIZE SYSTEM</span>
               </button>
@@ -487,14 +488,14 @@ export const HUD: React.FC<HUDProps> = ({
                     key={i}
                     onClick={() => engine?.current?.selectMod(mod)}
                     className={`
-                                relative group overflow-hidden bg-slate-900 border-2 p-6 rounded-2xl transition-all hover:scale-105 text-left flex flex-col h-64 shadow-2xl
-                                ${mod.rarity === 'LEGENDARY' ? 'border-amber-500/50 hover:border-amber-500 shadow-amber-500/10' :
-                        mod.rarity === 'RARE' ? 'border-cyan-500/50 hover:border-cyan-500 shadow-cyan-500/10' :
-                          'border-slate-600 hover:border-slate-400 shadow-blue-500/5'}
+                                relative group overflow-hidden bg-slate-900 border-2 p-6 rounded-2xl transition-all lg:hover:scale-105 text-left flex flex-col h-64 shadow-2xl
+                                ${mod.rarity === 'LEGENDARY' ? 'border-amber-500/50 lg:hover:border-amber-500 shadow-amber-500/10' :
+                        mod.rarity === 'RARE' ? 'border-cyan-500/50 lg:hover:border-cyan-500 shadow-cyan-500/10' :
+                          'border-slate-600 lg:hover:border-slate-400 shadow-blue-500/5'}
                             `}
                   >
                     <div className={`
-                                absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity
+                                absolute inset-0 opacity-0 lg:group-hover:opacity-10 transition-opacity
                                 ${mod.rarity === 'LEGENDARY' ? 'bg-amber-500' : mod.rarity === 'RARE' ? 'bg-cyan-500' : 'bg-white'}
                             `} />
 
@@ -511,7 +512,7 @@ export const HUD: React.FC<HUDProps> = ({
 
                     <Cpu size={32} className={`mb-4 ${mod.rarity === 'LEGENDARY' ? 'text-amber-400' : mod.rarity === 'RARE' ? 'text-cyan-400' : 'text-slate-200'}`} />
 
-                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-200 transition-colors">{mod.name}</h3>
+                    <h3 className="text-xl font-bold text-white mb-2 lg:group-hover:text-blue-200 transition-colors">{mod.name}</h3>
                     <p className="text-slate-400 text-sm leading-relaxed">{mod.description}</p>
 
                     <div className="mt-auto pt-4 flex items-center gap-2 text-xs font-mono opacity-50">
@@ -533,7 +534,7 @@ export const HUD: React.FC<HUDProps> = ({
               <h2 className="text-3xl font-bold text-white mb-6 tracking-widest">SYSTEM PAUSED</h2>
               <button
                 onClick={() => engine?.current?.togglePause()}
-                className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-colors flex items-center gap-2 mx-auto"
+                className="bg-blue-600 lg:hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-colors flex items-center gap-2 mx-auto"
               >
                 <Play size={20} fill="currentColor" /> RESUME
               </button>
@@ -554,7 +555,7 @@ export const HUD: React.FC<HUDProps> = ({
 
               <button
                 onClick={() => window.location.reload()}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-colors border border-slate-600 hover:border-slate-500"
+                className="w-full bg-slate-800 lg:hover:bg-slate-700 text-white text-lg font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-colors border border-slate-600 lg:hover:border-slate-500"
               >
                 <RotateCw size={24} /> REBOOT SYSTEM
               </button>

@@ -90,6 +90,7 @@ export class GameEngine {
     private onStateChange: (state: GameState) => void;
 
     public speedMultiplier: number = 1;
+    public needsBuffRecalculation: boolean = true;
 
     // Screen shake
     public shakeIntensity: number = 0;
@@ -317,6 +318,7 @@ export class GameEngine {
         this.createFloatingText(tower.position, `+$${refund}`, "#F87171");
         this.createExplosion(tower.position, '#F87171', 8, 1.5);
         this.towers = this.towers.filter(t => t.id !== tower.id);
+        this.needsBuffRecalculation = true;
         this.towerMap.delete(tower.id);
         this.notifyState();
     }
@@ -425,6 +427,35 @@ export class GameEngine {
     }
 
         private update() {
+        const max = Math.max;
+
+        // --- BTD6 BEACON BUFF SYSTEM ---
+        if (this.needsBuffRecalculation) {
+            this.towers.forEach(t => {
+                t.attackSpeedBuff = 1;
+                t.rangeBuff = 1;
+                t.camoGranted = false;
+            });
+
+            const beacons = this.towers.filter(t => t.type === 'BEACON');
+            beacons.forEach(beacon => {
+                this.towers.forEach(target => {
+                    if (target.id !== beacon.id) {
+                        const dist = beacon.position.distanceTo(target.position);
+                        if (dist <= beacon.range) {
+                            target.attackSpeedBuff = max(target.attackSpeedBuff, 1 + (0.2 * beacon.level));
+                            target.rangeBuff = max(target.rangeBuff, 1 + (0.15 * beacon.level));
+                            if (beacon.level >= 3) {
+                                target.camoGranted = true;
+                            }
+                        }
+                    }
+                });
+            });
+            this.needsBuffRecalculation = false;
+        }
+        // --- END BUFF SYSTEM ---
+
         // Wave Logic
         const newEnemyType = this.waveManager.update(16); // Assuming fixed step or passing dt
         if (newEnemyType) {
@@ -494,6 +525,9 @@ export class GameEngine {
         this.towers.forEach(t => {
             const target = t.update(this.enemies);
 
+            if (t.type === 'BEACON') {
+                return;
+            }
             if (t.type === 'FARM') {
                 if (t.cooldownTimer <= 0) {
                     // Generate Money

@@ -23,6 +23,9 @@ export class Tower implements ITower {
   pierce: number;
   statusEffect?: StatusEffect;
   camoDetection: boolean;
+  camoGranted: boolean = false;
+  attackSpeedBuff: number = 1;
+  rangeBuff: number = 1;
   totalSpent: number;
 
   // Visual recoil
@@ -160,7 +163,7 @@ export class Tower implements ITower {
 
   update(enemies: Enemy[]): Enemy | null {
     if (this.cooldownTimer > 0) {
-      this.cooldownTimer--;
+      this.cooldownTimer -= this.attackSpeedBuff;
     }
 
     // Recover from recoil
@@ -174,7 +177,7 @@ export class Tower implements ITower {
         if (this.cooldownTimer <= 0) {
              let hit = false;
              for (const e of enemies) {
-                 if (!e.isDead && !e.reachedEnd && this.position.distanceTo(e.position) <= this.range) {
+                 if (!e.isDead && !e.reachedEnd && this.position.distanceTo(e.position) <= (this.range * this.rangeBuff)) {
                      if (this.statusEffect) {
                          e.applyEffect(this.statusEffect);
                          hit = true;
@@ -189,9 +192,9 @@ export class Tower implements ITower {
     }
 
     // Farm Logic
-    if (this.type === 'FARM') {
+    if (this.type === 'FARM' || this.type === 'BEACON') {
         if (this.cooldownTimer > 0) {
-            this.cooldownTimer--;
+            this.cooldownTimer -= this.attackSpeedBuff;
         }
         // GameEngine checks if cooldownTimer <= 0 to generate money
         return null;
@@ -205,10 +208,10 @@ export class Tower implements ITower {
     for (const e of enemies) {
         if (e.isDead || e.reachedEnd) continue;
         // Camo Check
-        if (e.isCamo && !this.camoDetection) continue;
+        if (e.isCamo && !(this.camoDetection || this.camoGranted)) continue;
 
         const dist = this.position.distanceTo(e.position);
-        if (dist > this.range) continue;
+        if (dist > (this.range * this.rangeBuff)) continue;
 
         let metric = 0;
         switch (this.targetingMode) {
@@ -309,7 +312,7 @@ export class Tower implements ITower {
     // Draw Range if selected
     if (isSelected) {
       ctx.beginPath();
-      ctx.arc(0, 0, this.range, 0, Math.PI * 2);
+      ctx.arc(0, 0, this.range * this.rangeBuff, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
       ctx.fill();
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
@@ -448,6 +451,23 @@ export class Tower implements ITower {
         ctx.fillStyle = this.color; // Reset for center
         ctx.beginPath();
         ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (this.type === 'BEACON') {
+        // Beacon
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.moveTo(0, -18);
+        ctx.lineTo(15, 12);
+        ctx.lineTo(-15, 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#0f766e'; // Teal 700
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // Inner gem
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
         ctx.fill();
     } else if (this.type === 'FARM') {
         // Farm

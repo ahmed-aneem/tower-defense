@@ -129,6 +129,19 @@ export const TOWERS = {
     pierce: 1,
     camoDetection: false
   },
+
+  BEACON: {
+    name: 'Beacon',
+    cost: 400,
+    range: 150,
+    damage: 0,
+    cooldown: 0,
+    color: '#14b8a6', // Teal
+    type: 'BEACON',
+    damageType: DamageType.ENERGY,
+    pierce: 0,
+    camoDetection: true
+  },
   FARM: {
     name: 'Farm',
     cost: 600,

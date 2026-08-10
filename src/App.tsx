@@ -215,8 +215,9 @@ function App() {
         }}
       >
         <canvas
-          width={dimensions.width}
-          height={dimensions.height}
+          width={dimensions.width * (window.devicePixelRatio || 1)}
+          height={dimensions.height * (window.devicePixelRatio || 1)}
+          style={{ width: dimensions.width, height: dimensions.height }}
           ref={canvasRef}
           className="cursor-crosshair block touch-none"
           onClick={handleCanvasClick}
