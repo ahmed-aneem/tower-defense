@@ -48,6 +48,10 @@ export class Tower implements ITower {
     // @ts-expect-error config object typing
     this.camoDetection = config.camoDetection;
     this.totalSpent = config.cost;
+
+    if (this.type === 'SNIPER') {
+      this.targetingMode = TowerTargetingMode.STRONGEST;
+    }
   }
 
   get upgradeCost(): number {
@@ -421,16 +425,7 @@ export class Tower implements ITower {
         ctx.arc(0, 0, 4, 0, Math.PI * 2);
         ctx.fill();
 
-        // Static sparks
-        if (Math.random() < 0.2) {
-             ctx.strokeStyle = '#fff';
-             ctx.lineWidth = 1;
-             const angle = Math.random() * Math.PI * 2;
-             ctx.beginPath();
-             ctx.moveTo(Math.cos(angle)*4, Math.sin(angle)*4);
-             ctx.lineTo(Math.cos(angle)*12, Math.sin(angle)*12);
-             ctx.stroke();
-        }
+        // Static sparks removed for performance (Math.random in draw loop)
     } else if (this.type === 'TACK') {
         // Tack Shooter
         ctx.beginPath();

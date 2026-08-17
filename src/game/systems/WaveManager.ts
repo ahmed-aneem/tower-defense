@@ -53,19 +53,35 @@ export class WaveManager {
         if (waveNum > 50) count = Math.min(150, Math.floor(count * 1.5)); // Cap spawn count
 
         for (let i = 0; i < count; i++) {
-            if (waveNum % 10 === 0 && i < Math.max(1, waveNum / 20)) {
-                enemies.push('BOSS');
-            } else if (waveNum % 5 === 0 && i < waveNum / 3) {
-                enemies.push('TANK');
-            } else if (waveNum > 3 && i % 4 === 0) {
-                enemies.push('FAST');
-            } else if (waveNum > 2 && i % 3 === 0) {
-                enemies.push('ARMORED');
+            // Hardcoded BTD6-like Milestones
+            if (waveNum === 24) {
+                 if (i < 5) enemies.push('FAST'); // First Camo equivalent
+                 else enemies.push('NORMAL');
+            } else if (waveNum === 28) {
+                 if (i < 3) enemies.push('TANK'); // First Lead equivalent
+                 else enemies.push('NORMAL');
+            } else if (waveNum === 40) {
+                 if (i === 0) enemies.push('BOSS'); // First MOAB equivalent
+                 else enemies.push('NORMAL');
+            } else if (waveNum === 60) {
+                 if (i < 3) enemies.push('BOSS'); // BFB equivalent (Multiple bosses)
+                 else enemies.push('ARMORED');
             } else {
-                if (waveNum > 50 && i % 5 === 0) {
-                    enemies.push('BOSS'); // Add random bosses in freeplay
+                // Standard generation
+                if (waveNum % 10 === 0 && i < Math.max(1, waveNum / 20)) {
+                    enemies.push('BOSS');
+                } else if (waveNum % 5 === 0 && i < waveNum / 3) {
+                    enemies.push('TANK');
+                } else if (waveNum > 3 && i % 4 === 0) {
+                    enemies.push('FAST');
+                } else if (waveNum > 2 && i % 3 === 0) {
+                    enemies.push('ARMORED');
                 } else {
-                    enemies.push('NORMAL');
+                    if (waveNum > 50 && i % 5 === 0) {
+                        enemies.push('BOSS'); // Add random bosses in freeplay
+                    } else {
+                        enemies.push('NORMAL');
+                    }
                 }
             }
         }
