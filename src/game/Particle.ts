@@ -81,7 +81,6 @@ export class Particle implements IParticle {
         ctx.fillStyle = this.color;
         ctx.textAlign = 'center';
 
-        ctx.shadowBlur = 0;
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 3;
         ctx.strokeText(this.text, this.position.x, this.position.y);
