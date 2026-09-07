@@ -12,6 +12,7 @@ export class WaveManager {
     constructor() {}
 
     public hpMultiplier: number = 1;
+    public speedMultiplier: number = 1;
 
     startNextWave(): void {
         this.wave++;
@@ -46,6 +47,10 @@ export class WaveManager {
         // Freeplay scaling
         if (waveNum > 50) {
             this.hpMultiplier = 1 + ((waveNum - 50) * 0.2); // +20% HP per wave after 50
+            this.speedMultiplier = 1 + ((waveNum - 50) * 0.05); // +5% Speed per wave after 50
+        } else {
+            this.hpMultiplier = 1;
+            this.speedMultiplier = 1;
         }
 
         // Endless scaling count

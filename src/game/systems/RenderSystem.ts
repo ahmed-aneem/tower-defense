@@ -9,7 +9,7 @@ export class RenderSystem {
 
     draw() {
         const {
-            ctx, canvas, gridCanvas, shakeIntensity, shakeX, shakeY,
+            ctx, canvas, backgroundCanvas, shakeIntensity, shakeX, shakeY,
             path, towers, enemies, projectiles, lightningBolts, particles
         } = this.engine;
 
@@ -22,29 +22,28 @@ export class RenderSystem {
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        if (gridCanvas) {
-            ctx.drawImage(gridCanvas, 0, 0);
+        if (backgroundCanvas) {
+            ctx.drawImage(backgroundCanvas, 0, 0);
         } else {
             this.drawGrid(ctx, canvas);
-        }
-
-        // Draw Path
-        ctx.beginPath();
-        if (path.length > 0) {
-            ctx.moveTo(path[0].x, path[0].y);
-            for (let i = 1; i < path.length; i++) {
-                ctx.lineTo(path[i].x, path[i].y);
+            // Draw Path Fallback
+            ctx.beginPath();
+            if (path.length > 0) {
+                ctx.moveTo(path[0].x, path[0].y);
+                for (let i = 1; i < path.length; i++) {
+                    ctx.lineTo(path[i].x, path[i].y);
+                }
             }
-        }
-        ctx.lineWidth = 20;
-        ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
+            ctx.lineWidth = 20;
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
 
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#60a5fa';
-        ctx.stroke();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#60a5fa';
+            ctx.stroke();
+        }
 
         towers.forEach(t => {
             t.draw(ctx);

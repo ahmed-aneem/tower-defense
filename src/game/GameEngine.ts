@@ -80,7 +80,7 @@ export class GameEngine {
     isRunning: boolean = true;
     placementMode: TowerType | null = null;
     mousePosition: Vector2 = new Vector2(0, 0);
-    gridCanvas: HTMLCanvasElement | null = null;
+    backgroundCanvas: HTMLCanvasElement | null = null;
 
     private lastModWave: number = 0;
     private lastTime: number = 0;
@@ -160,17 +160,20 @@ export class GameEngine {
         this.ctx.resetTransform();
         this.ctx.scale(dpr, dpr);
 
-        this.preRenderGrid();
+        this.preRenderBackground();
     }
 
-    private preRenderGrid() {
-        if (!this.gridCanvas) {
-            this.gridCanvas = document.createElement('canvas');
+    private preRenderBackground() {
+        if (!this.backgroundCanvas) {
+            this.backgroundCanvas = document.createElement('canvas');
         }
-        this.gridCanvas.width = this.width;
-        this.gridCanvas.height = this.height;
-        const ctx = this.gridCanvas.getContext('2d')!;
+        this.backgroundCanvas.width = this.width;
+        this.backgroundCanvas.height = this.height;
+        const ctx = this.backgroundCanvas.getContext('2d')!;
 
+        ctx.clearRect(0, 0, this.width, this.height);
+
+        // Grid
         ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
         ctx.lineWidth = 1;
 
@@ -188,6 +191,24 @@ export class GameEngine {
             ctx.lineTo(this.width, y);
             ctx.stroke();
         }
+
+        // Path
+        ctx.beginPath();
+        if (this.path.length > 0) {
+            ctx.moveTo(this.path[0].x, this.path[0].y);
+            for (let i = 1; i < this.path.length; i++) {
+                ctx.lineTo(this.path[i].x, this.path[i].y);
+            }
+        }
+        ctx.lineWidth = 20;
+        ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#60a5fa';
+        ctx.stroke();
     }
 
     startGame() {
@@ -473,12 +494,21 @@ export class GameEngine {
                  enemy.maxHp = enemy.hp;
              }
 
+             // Apply Freeplay speed multiplier
+             if (this.waveManager.speedMultiplier > 1) {
+                 enemy.speed = enemy.speed * this.waveManager.speedMultiplier;
+             }
+
              this.enemies.push(enemy);
         }
 
         // Check Wave Completion
         if (this.waveManager.checkWaveCompletion(this.enemies.length)) {
             this.state.waveActive = false;
+
+            // End of Wave Cash Bonus (BTD6 Mechanic)
+            const waveBonus = 100 + this.state.wave * 2;
+            this.state.money += waveBonus;
             this.applyEndOfWaveMods();
             if (this.state.autoStart) {
                  this.startWave();
