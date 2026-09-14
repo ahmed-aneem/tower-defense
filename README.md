@@ -20,7 +20,7 @@
 - **Game Logic**: HTML5 Canvas + TypeScript
 - **Framework**: React 19 (for HUD/UI)
 - **Styling**: TailwindCSS 4.x
-- **Build**: Vite 7.x
+- **Build**: Vite 7.x (with PWA Support)
 
 ## 🚀 Play Now
 

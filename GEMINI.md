@@ -35,7 +35,7 @@ This is a modern Tower Defense game built with React, TypeScript, and HTML5 Canv
 
 ## Development
 
-- **Build**: Vite + Tailwind CSS v4.
+- **Build**: Vite + Tailwind CSS v4 + Vite PWA plugin.
 - **Styling**: Tailwind for UI, Canvas API for game world.
 - **Icons**: `lucide-react`.
 

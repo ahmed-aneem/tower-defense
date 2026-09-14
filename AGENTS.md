@@ -9,7 +9,7 @@
 
 ### 2. Spark-Frontend (HUD Designer)
 - **Role**: Building the React-based HUD and menus.
-- **Focus**: Visual clarity, TailwindCSS 4 patterns, and "Neon" aesthetic consistency.
+- **Focus**: Visual clarity, TailwindCSS 4 patterns, compact and responsive UI scaling for mobile, and "Neon" aesthetic consistency.
 - **Vibe**: Modern, creative, and UI-focused.
 
 ### 3. Neon-Engine (Physics & VFX Expert)
