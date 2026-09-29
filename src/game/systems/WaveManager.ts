@@ -71,6 +71,12 @@ export class WaveManager {
             } else if (waveNum === 60) {
                  if (i < 3) enemies.push('BOSS'); // BFB equivalent (Multiple bosses)
                  else enemies.push('ARMORED');
+            } else if (waveNum === 63) {
+                 if (i < count / 2) enemies.push('ARMORED'); // Clustered ceramic rush
+                 else enemies.push('SWARM');
+            } else if (waveNum === 80) {
+                 if (i < 5) enemies.push('BOSS'); // ZOMG equivalent
+                 else enemies.push('FAST');
             } else {
                 // Standard generation
                 if (waveNum % 10 === 0 && i < Math.max(1, waveNum / 20)) {

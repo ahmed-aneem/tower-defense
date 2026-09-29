@@ -704,6 +704,7 @@ export class GameEngine {
     }
 
     public createExplosion(pos: Vector2, color: string, count: number, scale: number = 1) {
+        if (this.particles.length > 300) return;
         for (let i = 0; i < count; i++) {
             const shape = Math.random() > 0.5 ? 'SQUARE' : 'CIRCLE';
             // Occasional star for big explosions
