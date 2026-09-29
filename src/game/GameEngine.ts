@@ -54,6 +54,8 @@ export class GameEngine {
     particlePool: ObjectPool<Particle>;
     quadTree: QuadTree;
 
+    selectedTower: Tower | null = null;
+
     state: GameState = {
         money: 300,
         lives: 20,
@@ -893,11 +895,18 @@ export class GameEngine {
             if (action.action === 'PLACE') {
                 if (this.placeTower(action.pos, action.type)) {
                     this.inputManager.setPlacementMode(null);
+                    this.selectedTower = null;
                     return null;
                 }
             } else if (action.action === 'SELECT') {
-                return action.tower;
+                const selected = action.tower || null;
+                this.selectedTower = selected;
+                return selected;
             }
+        } else {
+             if (this.inputManager.placementMode === null) {
+                  this.selectedTower = null; // clicked on empty space, deselect
+             }
         }
         return null;
     }

@@ -69,6 +69,20 @@ export class RenderSystem {
 
         enemies.forEach(e => e.draw(ctx));
 
+        // Draw visual targeting feedback
+        if (this.engine.selectedTower && this.engine.selectedTower.targetId) {
+            const target = enemies.find(e => e.id === this.engine.selectedTower!.targetId);
+            if (target && !target.isDead) {
+                ctx.beginPath();
+                ctx.arc(target.position.x, target.position.y, target.radius + 10, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
         projectiles.forEach(p => p.draw(ctx));
 
         lightningBolts.forEach(bolt => {

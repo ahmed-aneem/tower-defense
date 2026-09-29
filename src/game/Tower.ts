@@ -254,15 +254,25 @@ export class Tower implements ITower {
       // Calculate anticipated position based on target's current path direction and speed
       let anticipatedPos = target.position.clone();
       if (target.path && target.path.length > target.waypointIndex + 1) {
-          const nextWaypoint = target.path[target.waypointIndex + 1];
-          const dirToWaypoint = nextWaypoint.sub(target.position).normalize();
           const targetCurrentSpeed = target.speed * target.getSpeedMultiplier();
+          let distanceToTravel = targetCurrentSpeed * travelTimeFrames;
+          let currentPos = target.position.clone();
+          let currentIndex = target.waypointIndex;
 
-          anticipatedPos = target.position.add(dirToWaypoint.scale(targetCurrentSpeed * travelTimeFrames));
+          while (distanceToTravel > 0 && currentIndex < target.path.length - 1) {
+              const nextWaypoint = target.path[currentIndex + 1];
+              const distToNext = currentPos.distanceTo(nextWaypoint);
 
-          // Clamp anticipated position so it doesn't overshoot the waypoint for simple logic
-          if (target.position.distanceTo(anticipatedPos) > target.position.distanceTo(nextWaypoint)) {
-              anticipatedPos = nextWaypoint.clone();
+              if (distanceToTravel <= distToNext) {
+                  const dir = nextWaypoint.sub(currentPos).normalize();
+                  anticipatedPos = currentPos.add(dir.scale(distanceToTravel));
+                  break;
+              } else {
+                  distanceToTravel -= distToNext;
+                  currentPos = nextWaypoint.clone();
+                  anticipatedPos = currentPos.clone(); // In case we run out of path
+                  currentIndex++;
+              }
           }
       }
 

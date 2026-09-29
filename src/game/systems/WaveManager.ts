@@ -46,8 +46,8 @@ export class WaveManager {
 
         // Freeplay scaling
         if (waveNum > 50) {
-            this.hpMultiplier = 1 + ((waveNum - 50) * 0.2); // +20% HP per wave after 50
-            this.speedMultiplier = 1 + ((waveNum - 50) * 0.05); // +5% Speed per wave after 50
+            this.hpMultiplier = Math.pow(1.15, waveNum - 50); // Exponential HP scaling (15% per wave compounding)
+            this.speedMultiplier = Math.min(3, Math.pow(1.02, waveNum - 50)); // Cap speed at 3x to avoid teleporting bugs
         } else {
             this.hpMultiplier = 1;
             this.speedMultiplier = 1;
