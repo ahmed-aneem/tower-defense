@@ -12,6 +12,7 @@ This is a modern Tower Defense game built with React, TypeScript, and HTML5 Canv
 - **Maps**: Maps are defined in `src/game/Maps.ts`. The Engine is re-initialized when the map changes.
 - **Mods**: A roguelite system where players pick upgrades every 5 waves. Logic in `src/game/Mods.ts` and `GameEngine.ts`.
 - **Performance**: Uses `ObjectPool` for high-frequency entities, removed expensive Canvas shadows, capped accumulator to prevent spiral-of-death, and throttles React state updates to ensure 60FPS on mobile.
+- **Visual Polish**: Includes pulsating neon range indicators for selected towers, calculated via `performance.now()`.
 
 ## Features
 

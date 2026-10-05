@@ -325,12 +325,16 @@ export class Tower implements ITower {
 
     // Draw Range if selected
     if (isSelected) {
+      const time = performance.now() * 0.003;
+      const pulseOpacity = 0.1 + (Math.sin(time) * 0.05);
+      const borderOpacity = 0.4 + (Math.sin(time) * 0.2);
+
       ctx.beginPath();
       ctx.arc(0, 0, this.range * this.rangeBuff, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
+      ctx.fillStyle = `rgba(59, 130, 246, ${pulseOpacity})`;
       ctx.fill();
-      ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(59, 130, 246, ${borderOpacity})`;
+      ctx.lineWidth = 1.5;
       ctx.setLineDash([5, 5]);
       ctx.stroke();
       ctx.setLineDash([]);

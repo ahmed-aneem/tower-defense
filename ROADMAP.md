@@ -14,7 +14,7 @@
 
 ## 🚀 Phase 3: Polish & Platform (Future)
 - [ ] **Local Storage**: Save game progress, unlocked maps, and best waves.
-- [ ] **VFX Overhaul**: Advanced particle effects for explosions and energy beams.
+- [x] **VFX Overhaul**: Advanced particle effects for explosions and energy beams, plus pulsating neon range rings.
 - [x] **Mobile Optimization**: PWA support via `vite-plugin-pwa` and touch-optimized UI controls.
 - [ ] **Level Editor**: Allow users to create and share their own neon maps.
 

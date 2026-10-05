@@ -9,7 +9,7 @@
 
 ## ✨ Features
 
-- **Neon Engine**: Custom high-frequency Canvas rendering engine for 60FPS performance.
+- **Neon Engine**: Custom high-frequency Canvas rendering engine for 60FPS performance with visual feedback like pulsating range rings.
 - **Roguelite Mods**: Dynamic upgrade system offered every 5 waves for deep strategic variety.
 - **Deep Tower Upgrades**: 9 tower types with branching Level 3 upgrades (e.g., Path A vs Path B for Railgun, Plasma Overdrive, etc.).
 - **Complex Mechanics**: Damage types (Physical, Energy, Cold), Resistances, Pierce, and Status Effects (SLOW, BURN, STUN).
