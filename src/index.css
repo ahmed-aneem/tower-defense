@@ -29,3 +29,20 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #64748b;
 }
+
+.wave-banner { animation: banner 2.2s ease-out forwards; }
+@keyframes banner {
+    0% { opacity: 0; transform: translateX(-80px); }
+    15% { opacity: 1; transform: translateX(0); }
+    80% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(80px); }
+}
+
+.danger-vignette {
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(239, 68, 68, 0.35) 100%);
+    animation: danger 1.2s ease-in-out infinite;
+}
+@keyframes danger {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+}

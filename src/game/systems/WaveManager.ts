@@ -17,8 +17,26 @@ export class WaveManager {
     startNextWave(): void {
         this.wave++;
         this.waveActive = true;
+        this.applyScaling(this.wave);
         this.enemiesToSpawn = this.generateWave(this.wave);
         this.spawnTimer = 0;
+    }
+
+    /** Count of each enemy type for a given wave, without touching wave state. */
+    preview(waveNum: number): Partial<Record<EnemyType, number>> {
+        const out: Partial<Record<EnemyType, number>> = {};
+        for (const t of this.generateWave(waveNum)) out[t] = (out[t] ?? 0) + 1;
+        return out;
+    }
+
+    private applyScaling(waveNum: number) {
+        if (waveNum > 50) {
+            this.hpMultiplier = Math.pow(1.15, waveNum - 50); // Exponential HP scaling (15% per wave compounding)
+            this.speedMultiplier = Math.min(3, Math.pow(1.02, waveNum - 50)); // Cap speed at 3x to avoid teleporting bugs
+        } else {
+            this.hpMultiplier = 1;
+            this.speedMultiplier = 1;
+        }
     }
 
     update(dt: number): EnemyType | null {
@@ -43,15 +61,6 @@ export class WaveManager {
 
     private generateWave(waveNum: number): EnemyType[] {
         const enemies: EnemyType[] = [];
-
-        // Freeplay scaling
-        if (waveNum > 50) {
-            this.hpMultiplier = Math.pow(1.15, waveNum - 50); // Exponential HP scaling (15% per wave compounding)
-            this.speedMultiplier = Math.min(3, Math.pow(1.02, waveNum - 50)); // Cap speed at 3x to avoid teleporting bugs
-        } else {
-            this.hpMultiplier = 1;
-            this.speedMultiplier = 1;
-        }
 
         // Endless scaling count
         let count = 5 + Math.floor(waveNum * 1.5);

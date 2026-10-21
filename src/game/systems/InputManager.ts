@@ -1,3 +1,5 @@
+import { drawTowerBase, skinTowerColor } from '../Skins';
+import { drawTowerSprite } from '../TowerSprites';
 import { Vector2 } from '../Vector';
 import { type TowerType, TOWERS } from '../Constants';
 import { Tower } from '../Tower';
@@ -54,15 +56,12 @@ export class InputManager {
             ctx.setLineDash([5, 5]);
             ctx.stroke();
 
-            // Body
-            ctx.fillStyle = tConf.color;
-            ctx.beginPath();
-            if (this.placementMode === 'SPLASH') {
-                ctx.rect(-10, -10, 20, 20);
-            } else {
-                ctx.arc(0, 0, 10, 0, Math.PI * 2);
-            }
-            ctx.fill();
+            // Body (real sprite, semi-transparent)
+            ctx.globalAlpha = canPlace ? 0.85 : 0.45;
+            const color = skinTowerColor(this.placementMode, tConf.color);
+            drawTowerBase(ctx, color);
+            drawTowerSprite(ctx, this.placementMode, color, performance.now() / 1000, false);
+            ctx.globalAlpha = 1;
 
             ctx.restore();
         }

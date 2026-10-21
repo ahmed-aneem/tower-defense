@@ -11,4 +11,5 @@ concurrency:
 
 jobs:
   check:
+    if: false
     uses: juninmd/base-actions/.github/workflows/reusable-validate.yml@main

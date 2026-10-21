@@ -1,4 +1,7 @@
 import { type GameEngine } from '../GameEngine';
+import { drawEndpoints } from '../MapRenderer';
+import { drawLinks, drawPreviewLinks } from '../Resonance';
+import { skinTowerColor } from '../Skins';
 
 export class RenderSystem {
     private engine: GameEngine;
@@ -44,6 +47,10 @@ export class RenderSystem {
             ctx.strokeStyle = '#60a5fa';
             ctx.stroke();
         }
+
+        drawEndpoints(ctx, path, this.engine.themeKey, this.engine.state.lives);
+
+        drawLinks(ctx, towers, t => skinTowerColor(t.type, t.color));
 
         towers.forEach(t => {
             t.draw(ctx);
@@ -107,6 +114,8 @@ export class RenderSystem {
         // Draw Placement Ghost
         const canPlace = this.engine.canPlaceTower(this.engine.mousePosition);
         this.engine.inputManager.drawPreview(ctx, canPlace);
+        const mode = this.engine.inputManager.placementMode;
+        if (mode) drawPreviewLinks(ctx, towers, this.engine.mousePosition, mode, canPlace);
 
         ctx.restore();
     }

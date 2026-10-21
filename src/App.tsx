@@ -21,7 +21,9 @@ function App() {
     choosingMod: false,
     modOptions: [],
     speed: 1,
-    autoStart: false
+    autoStart: false,
+    enemiesLeft: 0,
+    waveTotal: 0
   });
   const [selectedTowerType, setSelectedTowerType] = useState<TowerType | null>(null);
   const [selectedTower, setSelectedTower] = useState<Tower | null>(null);
@@ -98,7 +100,7 @@ function App() {
     // Initialize Engine with selected map and dynamic dimensions
     const engine = new GameEngine(canvasRef.current, selectedMap.waypoints, dimensions.width, dimensions.height, (newState) => {
       setGameState(newState);
-    });
+    }, selectedMap.theme);
     engineRef.current = engine;
 
     return () => {

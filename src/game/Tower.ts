@@ -1,3 +1,5 @@
+import { drawTowerSprite } from './TowerSprites';
+import { skinTowerColor, drawTowerBase, getSkin } from './Skins';
 import { Vector2 } from './Vector';
 import { type ITower } from '../types';
 import { TOWERS, type TowerType, DamageType, TowerTargetingMode } from './Constants';
@@ -25,6 +27,7 @@ export class Tower implements ITower {
   camoDetection: boolean;
   camoGranted: boolean = false;
   attackSpeedBuff: number = 1;
+  links: string[] = []; // resonance partners (tower ids)
   rangeBuff: number = 1;
   totalSpent: number;
 
@@ -320,6 +323,7 @@ export class Tower implements ITower {
   }
 
   draw(ctx: CanvasRenderingContext2D, isSelected: boolean = false) {
+    const color = skinTowerColor(this.type, this.color);
     ctx.save();
     ctx.translate(this.position.x, this.position.y);
 
@@ -348,16 +352,12 @@ export class Tower implements ITower {
 
     // Glow effect removed for performance
 
-    // Draw Base
-    ctx.fillStyle = '#1e293b'; // Slate 800
-    ctx.fillRect(-14, -14, 28, 28);
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-14, -14, 28, 28);
+    // Draw Base (skin-dependent pedestal)
+    drawTowerBase(ctx, color);
 
     // Level Indicators
     if (this.level >= 2) {
-         ctx.strokeStyle = '#FCD34D'; // Amber 300
+         ctx.strokeStyle = getSkin().accent;
          ctx.lineWidth = 2;
          ctx.strokeRect(-17, -17, 34, 34); // Gold ring
     }
@@ -367,166 +367,8 @@ export class Tower implements ITower {
          ctx.strokeRect(-20, -20, 40, 40); // Outer white ring
     }
 
-    // Draw Turret
-    ctx.fillStyle = this.color;
-
-    // Different shapes for different towers
-    if (this.type === 'SNIPER') {
-      // Sniper Body
-      ctx.fillRect(-8, -8, 16, 16);
-      // Long barrel
-      ctx.fillRect(0, -3, 35, 6);
-      // Scope
-      ctx.fillStyle = '#10b981';
-      ctx.beginPath();
-      ctx.arc(5, -6, 3, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (this.type === 'RAPID') {
-      // Minigun body
-      ctx.beginPath();
-      ctx.arc(0, 0, 12, 0, Math.PI * 2);
-      ctx.fill();
-      // Barrels
-      ctx.fillRect(8, -6, 18, 4);
-      ctx.fillRect(8, 2, 18, 4);
-    } else if (this.type === 'FROST') {
-        // Frost Tower
-        ctx.beginPath();
-        ctx.moveTo(0, -12);
-        ctx.lineTo(10, 6);
-        ctx.lineTo(-10, 6);
-        ctx.closePath();
-        ctx.fill();
-        // Crystal
-        ctx.fillStyle = '#a5f3fc';
-        ctx.beginPath();
-        ctx.arc(0, 0, 6, 0, Math.PI * 2);
-        ctx.fill();
-    } else if (this.type === 'SPLASH') {
-        // Cannon
-        ctx.fillRect(-12, -12, 24, 24);
-        ctx.fillStyle = '#7f1d1d';
-        ctx.fillRect(0, -6, 26, 12); // Wide barrel
-    } else if (this.type === 'LASER') {
-        // Laser
-        ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
-        ctx.fill();
-        // Prongs
-        ctx.fillRect(5, -8, 15, 2);
-        ctx.fillRect(5, 6, 15, 2);
-        ctx.fillStyle = '#f0abfc';
-        ctx.fillRect(0, -2, 20, 4); // Core
-    } else if (this.type === 'TESLA') {
-        // Coil Base
-        ctx.fillStyle = '#94a3b8'; // Slate 400
-        ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Coil Turns
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 2;
-        for(let i=0; i<3; i++) {
-             ctx.beginPath();
-             ctx.arc(0, 0, 8 - (i*2), 0, Math.PI * 2);
-             ctx.stroke();
-        }
-
-        // Top Sphere
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(0, 0, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Static sparks removed for performance (Math.random in draw loop)
-    } else if (this.type === 'TACK') {
-        // Tack Shooter
-        ctx.beginPath();
-        ctx.arc(0, 0, 14, 0, Math.PI * 2);
-        ctx.fill();
-        // Spikes
-        ctx.fillStyle = '#cbd5e1'; // Slate 300
-        for(let i=0; i<8; i++) {
-            ctx.save();
-            ctx.rotate((Math.PI * 2 * i) / 8);
-            ctx.beginPath();
-            ctx.moveTo(10, -3);
-            ctx.lineTo(18, 0);
-            ctx.lineTo(10, 3);
-            ctx.fill();
-            ctx.restore();
-        }
-        ctx.fillStyle = this.color; // Reset for center
-        ctx.beginPath();
-        ctx.arc(0, 0, 8, 0, Math.PI * 2);
-        ctx.fill();
-    } else if (this.type === 'BEACON') {
-        // Beacon
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.moveTo(0, -18);
-        ctx.lineTo(15, 12);
-        ctx.lineTo(-15, 12);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#0f766e'; // Teal 700
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        // Inner gem
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(0, 0, 4, 0, Math.PI * 2);
-        ctx.fill();
-    } else if (this.type === 'FARM') {
-        // Farm
-        ctx.fillStyle = '#fcd34d'; // Amber 300
-        ctx.fillRect(-15, -15, 30, 30);
-        ctx.strokeStyle = '#b45309'; // Amber 700
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-15, -15, 30, 30);
-        // Crop lines
-        ctx.beginPath();
-        ctx.moveTo(-10, -10); ctx.lineTo(10, -10);
-        ctx.moveTo(-10, 0); ctx.lineTo(10, 0);
-        ctx.moveTo(-10, 10); ctx.lineTo(10, 10);
-        ctx.stroke();
-        // Banana/Coin icon?
-        ctx.fillStyle = '#166534'; // Green
-        ctx.beginPath();
-        ctx.arc(0, -5, 4, 0, Math.PI*2);
-        ctx.arc(5, 5, 4, 0, Math.PI*2);
-        ctx.arc(-5, 5, 4, 0, Math.PI*2);
-        ctx.fill();
-    } else if (this.type === 'PLASMA') {
-        // Plasma Tower
-        ctx.beginPath();
-        ctx.arc(0, 0, 12, 0, Math.PI * 2);
-        ctx.fill();
-        // Glowy core
-        ctx.fillStyle = '#c4b5fd'; // Violet 300
-        ctx.beginPath();
-        ctx.arc(0, 0, 8, 0, Math.PI * 2);
-        ctx.fill();
-        // Rings
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 0, 16, 0, Math.PI*2);
-        ctx.stroke();
-    } else {
-      // Basic
-      ctx.beginPath();
-      ctx.arc(0, 0, 10, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillRect(0, -4, 22, 8);
-    }
-
-    // Center pin
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(0, 0, 3, 0, Math.PI * 2);
-    ctx.fill();
+    // Draw character sprite
+    drawTowerSprite(ctx, this.type, color, performance.now() / 1000 + this.position.x, this.recoil > 1);
 
     ctx.restore();
   }
